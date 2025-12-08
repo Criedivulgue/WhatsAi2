@@ -99,7 +99,7 @@ export default function OnboardingFlow() {
     mode: 'onChange',
   });
 
-  const { trigger, handleSubmit } = form;
+  const { trigger, handleSubmit, getValues } = form;
 
   const nextStep = async () => {
     const fieldsToValidate = formSteps[step].fields as (keyof OnboardingFormValues)[];
@@ -117,9 +117,11 @@ export default function OnboardingFlow() {
     }
   };
 
-  const onSubmit = async (data: OnboardingFormValues) => {
+  const onSubmit = async () => {
     setIsLoading(true);
     try {
+      // Get all form values to ensure data is complete
+      const data = getValues();
       await createBrandAndUser(auth, firestore, data);
       toast({
         title: 'Configuração concluída!',

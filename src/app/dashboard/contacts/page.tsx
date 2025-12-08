@@ -1,14 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
 import { useUser, useFirestore, useDoc, useCollection } from '@/firebase';
 import type { Contact, User } from '@/lib/types';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -45,7 +44,6 @@ export default function ContactsPage() {
     useCollection<Contact>(contactsQuery);
 
   const isLoading = userLoading || userDataLoading;
-  const isButtonDisabled = isLoading || !brandId;
 
   if (isLoading) {
     return (
@@ -62,12 +60,8 @@ export default function ContactsPage() {
         <div className="flex items-center space-x-2">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button disabled={isButtonDisabled}>
-                {isButtonDisabled ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                )}
+              <Button disabled={!brandId}>
+                <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Contato
               </Button>
             </SheetTrigger>

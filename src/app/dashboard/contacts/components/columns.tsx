@@ -1,0 +1,89 @@
+'use client';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import type { Contact } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { ColumnDef } from '@tanstack/react-table';
+import { DataTableRowActions } from './data-table-row-actions';
+
+export const columns: ColumnDef<Contact>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: ({ row }) => {
+      const contact = row.original;
+      const avatar = PlaceHolderImages.find((p) => p.id === contact.avatar);
+      return (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={avatar?.imageUrl} alt={contact.name} data-ai-hint={avatar?.imageHint}/>
+            <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="font-medium">{contact.name}</span>
+            <span className="text-xs text-muted-foreground">{contact.email}</span>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'phone',
+    header: 'Phone',
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => {
+      const status = row.original.status;
+      const variant = {
+        'Active': 'default',
+        'New': 'secondary',
+        'Blocked': 'destructive',
+      }[status] || 'outline';
+      
+      return <Badge variant={variant as any}>{status}</Badge>;
+    },
+  },
+  {
+    accessorKey: 'categories',
+    header: 'Categories',
+    cell: ({ row }) => {
+      const categories = row.original.categories;
+      return (
+        <div className="flex flex-wrap gap-1">
+          {categories.map((cat) => (
+            <Badge key={cat} variant="outline" className="font-normal">
+              {cat}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
+    id: 'actions',
+    cell: ({ row }) => <DataTableRowActions row={row} />,
+  },
+];

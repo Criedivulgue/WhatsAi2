@@ -11,7 +11,7 @@ export const ai = genkit({
       flows: [
         () => import('@/ai/flows/generate-chat-summary'),
         () => import('@/ai/flows/generate-follow-up-suggestions'),
-        ().  => import('@/ai/flows/generate-initial-greeting'),
+        () => import('@/ai/flows/generate-initial-greeting'),
         () => import('@/ai/flows/suggest-profile-enrichments'),
       ],
     }),

@@ -4,4 +4,18 @@
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
-  maxInstances: 1
+  minInstances: 1
+  maxInstances: 10
+  concurrency: 100
+
+# The following are not required but are often useful.
+# excludedFiles:
+#  - .gitignore
+#
+# env:
+#   - variable: API_KEY
+#     secret: API_KEY_SECRET
+#
+# requiredCpu: 1
+# memoryMiB: 1024
+# timeoutSeconds: 300

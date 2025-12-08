@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-day-picker/package.json b/node_modules/react-day-picker/package.json
+index 5433a04..539c0e2 100644
+--- a/node_modules/react-day-picker/package.json
++++ b/node_modules/react-day-picker/package.json
+@@ -95,6 +95,6 @@
+   "peerDependenciesMeta": {
+     "date-fns": {
+       "optional": true
+-    }
+-  }
++    },
++    "react": { "optional": true }   }
+ }

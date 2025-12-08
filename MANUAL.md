@@ -1,164 +1,224 @@
-# Application Manual: WhatsAi
+# Manual Técnico: WhatsAi
 
-## 1. Core Objective
+## 1. Visão Geral e Arquitetura
 
-WhatsAi is an intelligent, all-in-one platform for contact management and customer service via chat. Its primary goal is to centralize communication, optimize attendant efficiency, and enrich customer relationships through the strategic use of Artificial Intelligence. The application is designed to be intuitive, powerful, and adaptable to the needs of any brand.
+O WhatsAi é uma plataforma inteligente para gestão de contatos e atendimento ao cliente via chat, construída sobre uma arquitetura moderna que combina Next.js, Firebase e Genkit (Google AI). O objetivo é centralizar a comunicação, otimizar a eficiência do atendente e enriquecer o relacionamento com o cliente através do uso estratégico de Inteligência Artificial.
 
-## 2. Core Features
+### 1.1. Mapa do Sistema (Diagrama Textual)
 
-WhatsAi is an integrated ecosystem of features designed to deliver a high-level service and management experience.
-
-### 2.1. Guided Onboarding Flow
-
-To ensure every user maximizes the platform's potential from day one, WhatsAi implements a mandatory and intuitive onboarding process.
-
--   **Brand Information Collection:** The user inputs the brand name, describes its tone of voice, and defines its communication rules.
--   **AI Behavior Configuration:** The user defines the AI's behavioral framework, including "Hard Rules" (strict prohibitions, e.g., "never offer unapproved discounts") and "Soft Rules" (stylistic guidelines, e.g., "use emojis sparingly"). This configuration governs all AI interactions.
--   **Attendant Details:** Collects basic attendant information to personalize the experience.
--   **AI Feature Activation:** Users can set default behaviors for the AI assistant, such as activating automatic conversation summaries, profile enrichment suggestions, and follow-up generation.
--   **Meta Tag Generation:** Based on the brand information, the system automatically generates Open Graph (OG) meta tags for the client-facing chat, ensuring professional link previews.
-
-### 2.2. Contact Management (CRM)
-
-The heart of WhatsAi is a robust system for organizing and analyzing contacts.
-
--   **Unified View:** All contacts are listed in a clean interface with essential information immediately visible.
--   **Contact Types, Categories, and Interests:**
-    -   **Contact Type:** Defines the core relationship (e.g., `Lead`, `Prospect`, `Client`, `VIP`, `Past Client`). This is critical for the AI to tailor its communication strategy.
-    -   **Categories:** Flexible tags for internal segmentation (e.g., `Enterprise`, `Q4-Campaign`, `Support-Tier-1`).
-    -   **Interests:** Specific topics the contact has shown interest in (e.g., `Generative AI`, `Cloud Computing`).
--   **Complete Editing:** Each contact profile can be edited to add or modify any of the above attributes, plus name, email, phone, and internal notes.
--   **Secure Storage:** All contact data is securely stored in Firestore.
-
-### 2.3. Attendant Chat Interface
-
-The main dashboard provides a three-panel layout designed for maximum efficiency: chat list, active conversation, and the contact information panel.
-
--   **Chat States:** Chats are managed through distinct states (`Active`, `Awaiting Return`, `Closed`, `Archived`, `AI-Assisted`), allowing attendants to prioritize and organize their work.
--   **Real-Time Updates:** Messages and chat states are updated in real-time, powered by Firestore.
--   **AI Control Toggling:** The attendant can toggle AI support (`Human-Only` vs. `AI-Assisted`) within the chat. When toggled off, the AI ceases all active participation but continues to listen in the background to maintain context, enabling seamless re-engagement.
--   **Inline Editing:** The contact panel allows for quick profile edits without leaving the chat screen.
-
-### 2.4. AI-Powered Chat Summarization
-
-The AI generates structured summaries by analyzing the **entire contact context**.
-
--   **Multi-Source Analysis:** The AI uses the current chat history, past conversation summaries, existing contact notes, interests, and categories to create a deeply contextualized summary.
--   **Structured Output:** Summaries include a concise overview, extracted action items, and an optional **sentiment analysis** (Positive, Neutral, Negative) to gauge customer satisfaction.
--   **Persistent Memory:** Summaries are saved to the client's history, providing immediate context for any future attendant.
-
-### 2.5. AI-Driven Profile Enrichment
-
-The AI proactively suggests improvements to a contact's profile based on the conversation.
-
--   **Contextual Suggestions:** By analyzing the dialogue against the contact's existing profile, the AI suggests new **Interests**, changes to **Categories**, or even updates to the **Contact Type** (e.g., `Lead` → `Prospect`).
--   **Opportunity Insights:** The AI identifies potential business opportunities or up-selling cues.
--   **Attendant Approval:** All suggestions are presented to the attendant for one-click approval or dismissal. Accepted changes update the contact's Firestore document.
-
-### 2.6. Intelligent Follow-Up & Notification System
-
-The AI generates personalized follow-up suggestions and automates scheduling.
-
--   **Multi-Channel Drafts:** Creates drafts of follow-up emails and WhatsApp messages that adhere to the brand's tone and the conversation's context.
--   **Next-Step Recommendations:** Suggests the best subsequent action, like scheduling a call or sending materials.
--   **Internal Notifications & Reminders:** When an action item is identified (e.g., "Send proposal by Friday"), the system can create an internal notification or reminder for the attendant.
--   **Event Creation:** Proposes creating Google Calendar events with pre-filled details (title, description, guests) to schedule meetings.
-
-### 2.7. PWA Chat for Clients
-
-WhatsAi offers a lightweight Progressive Web App (PWA) for the end client, ensuring a seamless and branded experience.
-
--   **Simplified Access & Session Control:**
-    -   The client accesses via a link and provides only their phone number to start. **No signup or account creation is required.**
-    -   The phone number acts as the session identifier. The session remains active for a predefined period (e.g., 24 hours). If the user returns after the session expires, a new chat is initiated to maintain conversation integrity.
-    -   A minimal privacy notice is displayed, informing the user that their number is used for identification.
--   **Brand Context Injection:** The chat experience is fully branded. The AI's initial greeting and subsequent responses are dynamically infused with the brand's defined **tone of voice and communication rules**.
--   **Real-Time and Offline Messaging:** PWA technology ensures a fluid experience with support for sending messages even with unstable connections.
-
-## 3. Style Guidelines
-
-The application's visual identity is designed to be clean, modern, and trustworthy.
-
--   **Primary Color:** Sea Green (`#30D155`) - Used for primary actions, buttons, and active states.
--   **Background Color:** Light Green (`#E5F8E8`) - A soft, unobtrusive color for the main application background.
--   **Accent Color:** Forest Green (`#6ACC7C`) - Used for subtle highlights, secondary information, and interactive elements.
--   **Typography:**
-    -   **Body & Headings:** PT Sans is used for all UI text for its warm, modern readability. A clear typographic scale (e.g., 14px, 16px, 20px, 24px) establishes a strong visual hierarchy.
-    -   **Code:** Source Code Pro is used for displaying code snippets or technical text.
--   **Iconography:** Minimalist, line-art icons (such as Lucide React) are used to provide clear, intuitive visual cues.
--   **Layout:**
-    -   The layout is responsive, ensuring a seamless experience on all devices.
-    -   Consistent spacing and sizing rules (based on an 8px grid) are applied to maintain a clean and organized structure.
-
-## 4. Technical Architecture
-
-This section provides an overview of the technical foundation of WhatsAi, structured from foundational layers to feature-specific systems.
-
-### 4.1. System Map (Textual Diagram)
+A arquitetura é dividida em camadas que se comunicam de forma clara:
 
 ```
-[Firebase Backend] <--> [Next.js Server] <--> [React Frontend (Dashboard & PWA)]
-       |                      |                             |
-   [Firestore]          [Genkit AI Flows]               [ShadCN UI]
-       |                      |                             |
-[Auth & Sec. Rules]       [Google AI (Gemini)]          [Tailwind CSS]
+[Firebase Backend] <------> [Next.js Server (App Router)] <------> [React Frontend (Dashboard & PWA)]
+       |                            |                                    |
+   [Firestore DB] <------------ [Server Actions] <-------------------- [ShadCN UI]
+       |                            |                                    |
+ [Authentication] <----- [Genkit AI Flows (Google AI)] <------------ [Tailwind CSS]
+       |
+ [Security Rules]
 ```
 
-### 4.2. Foundational Layers
+-   **Backend (Firebase):** Firestore atua como banco de dados NoSQL em tempo real, e o Firebase Authentication gerencia a identidade dos atendentes. As Security Rules garantem o isolamento de dados por marca.
+-   **Servidor (Next.js):** Utiliza o App Router para renderização no servidor (SSR) e Server Actions para executar lógica de backend segura, como a chamada para os fluxos de IA.
+-   **Frontend (React):** A interface do atendente (Dashboard) e a PWA do cliente são construídas com React, usando componentes ShadCN e estilização com Tailwind CSS.
+-   **Inteligência Artificial (Genkit):** Os fluxos de IA são definidos com Genkit, orquestrando chamadas para modelos do Google (Gemini) e garantindo saídas estruturadas.
 
--   **Global System Architecture:**
-    -   **Frontend:** A Next.js application using the App Router, React, and TypeScript.
-    -   **UI:** Built with ShadCN UI components and styled with Tailwind CSS.
-    -   **Backend:** Firebase serves as the primary backend, providing Firestore for the database and Firebase Authentication for attendants.
-    -   **AI:** Google's Genkit is used to create and manage AI flows that connect to LLMs like Gemini.
+### 1.2. Estrutura de Arquivos
 
--   **Module-Based Structure:**
-    -   `src/app/(dashboard)`: Routes and components for the main attendant dashboard.
-    -   `src/app/client-chat`: The lightweight PWA for end-clients.
-    -   `src/components`: Reusable React components.
-    -   `src/lib`: Core utilities, type definitions (`types.ts`), and mock data.
-    -   `src/ai`: Genkit flows, separated by functionality (e.g., `generate-chat-summary.ts`).
-    -   `src/firebase`: Firebase configuration and hooks.
+```
+/src
+|-- /app
+|   |-- /(dashboard)       # Rotas e layouts do painel do atendente
+|   |-- /client-chat       # Rotas e layouts da PWA do cliente
+|   |-- /api/genkit        # API Route para expor os fluxos de IA
+|   `-- actions.ts         # Server Actions
+|-- /ai
+|   `-- /flows             # Definições dos fluxos de IA (Genkit)
+|-- /components
+|   |-- /chat              # Componentes do sistema de chat
+|   `-- /ui                # Componentes reutilizáveis (ShadCN)
+|-- /firebase
+|   |-- config.ts          # Configuração de conexão com o Firebase
+|   `-- provider.tsx       # Provedor de contexto do Firebase
+|-- /lib
+|   |-- data.ts            # Dados mockados para desenvolvimento
+|   |-- placeholder-images # Imagens de exemplo
+|   |-- types.ts           # Definições de tipos TypeScript
+|   `-- utils.ts           # Funções utilitárias
+`-- MANUAL.md              # Este documento
+```
 
-### 4.3. System Workflows
+---
 
--   **AI Tool Execution Flow:**
-    1.  **User Action:** Attendant clicks an AI tool button (e.g., "Generate Summary").
-    2.  **Client-Side Request:** The client sends the **full context** (chat history, contact profile, past summaries) to a Next.js Server Action.
-    3.  **Server Action (Genkit Flow):** The Server Action invokes the corresponding Genkit flow.
-    4.  **LLM Call:** The flow formats the data into a prompt, including brand rules and tone, and calls the LLM, specifying the desired JSON output schema.
-    5.  **AI Logging:** Before returning the response, the system logs the entire transaction: the model used, the flow triggered, the input data hash, the raw JSON output, and a timestamp.
-    6.  **Structured Response:** The LLM returns a structured JSON object.
-    7.  **Display & Approval:** The client displays the suggestions. If the attendant accepts, a client-side function updates the relevant document in Firestore, and this approval is also logged.
+## 2. Onboarding e Contexto da Marca
 
--   **PWA Client & Session Flow:**
-    1.  **First Access:** User enters their phone number. A server-side check looks for an active chat session for that number.
-    2.  **Session Creation:** If no active session exists, a new chat document is created in Firestore with a `status` of `Active` and a `createdAt` timestamp.
-    3.  **Brand Context Injection:** The server retrieves the brand's tone and rules.
-    4.  **AI Greeting:** A Genkit flow generates an initial greeting infused with the brand's personality and sends it as the first message.
-    5.  **Session Timeout:** The chat session has a Time-to-Live (TTL) policy in Firestore. If inactive for a set period (e.g., 24 hours), its `status` changes to `Closed`. A new interaction from the same number will create a new chat, preserving the context of the old one as history.
+O fluxo de onboarding é a etapa fundamental onde a identidade da marca é capturada para guiar todas as interações da IA.
 
-### 4.4. Firestore Data Structure
+### 2.1. Coleta de Dados
 
--   `/brands/{brandId}`: Stores onboarding data (brandName, tone, hardRules, softRules).
--   `/users/{userId}`: Stores attendant user data, linked to a `brandId`.
--   `/contacts/{contactId}`:
-    -   Fields: `name`, `email`, `phone`, `contactType`, `status`, `brandId`.
-    -   Sub-collections: `categories` (array), `interests` (array), `notes` (string).
--   `/chats/{chatId}`:
-    -   Fields: `contactId`, `brandId`, `attendantId`, `status` (`Active`, `Awaiting Return`, `Closed`), `lastMessageTimestamp`.
-    -   Sub-collections:
-        -   `/messages/{messageId}`: (sender, content, timestamp).
-        -   `/summaries/{summaryId}`: (summaryText, actionItems, sentiment, createdAt).
--   `/ai_logs/{logId}`:
-    -   Fields: `flowName`, `modelUsed`, `inputHash`, `outputJSON`, `userAction` (`accepted`, `dismissed`), `timestamp`.
+O usuário (atendente/gestor) fornece:
+1.  **Nome da Marca:** Identificador principal.
+2.  **Tom de Voz:** Descrição de como a marca deve soar (ex: "amigável e profissional", "técnico e direto", "divertido e informal").
+3.  **Regras de Comunicação:** Um conjunto de diretrizes que a IA deve seguir.
 
--   **Indexes:** Composite indexes are required for querying chats by `status` and `lastMessageTimestamp`, and for querying contacts by `brandId` and `contactType`.
+### 2.2. Regras e Parâmetros da IA
 
-### 4.5. Security & Real-time Updates
+As regras são divididas em duas categorias para criar um framework comportamental claro:
 
--   **Security Rules:**
-    -   Attendants can only read/write data associated with their `brandId`.
-    -   PWA clients (unauthenticated) are granted limited write access only to the `/chats/{chatId}/messages` sub-collection for their specific session. They cannot read other chats or access contact data.
-    -   Rules enforce data schema on write.
--   **Real-time Pipeline:** The attendant dashboard and PWA client use Firestore's `onSnapshot` listener to subscribe to changes in the `/chats/{chatId}/messages` collection. New messages trigger real-time updates for all subscribed clients.
+-   **Hard Rules (Regras Rígidas):** Proibições absolutas que a IA não pode violar. São injetadas no prompt como instruções de alta prioridade.
+    -   *Exemplo:* "Nunca oferecer descontos não aprovados.", "Jamais prometer funcionalidades que não existem.", "Não usar gírias de forma alguma."
+-   **Soft Rules (Regras Flexíveis):** Diretrizes de estilo que moldam a personalidade da IA, mas permitem flexibilidade.
+    -   *Exemplo:* "Use emojis, mas com moderação.", "Prefira respostas curtas e diretas.", "Sempre cumprimente o cliente pelo nome."
+
+-   **Comportamento da IA (Ligada/Desligada):** O atendente pode alternar o modo da IA (`AI-Assisted` vs. `Human-Only`).
+    -   Quando **desligada**, a IA para de sugerir respostas e executar ações proativas. No entanto, ela continua a "ouvir" a conversa em segundo plano para manter o contexto. Isso permite que, ao ser reativada, ela possa gerar resumos ou sugestões instantaneamente, sem perder o fio da meada.
+
+---
+
+## 3. Gestão de Contatos (CRM) e Contexto Multi-Fonte
+
+O CRM é o cérebro do WhatsAi. A IA utiliza um contexto rico e multi-fonte para todas as suas análises e sugestões, indo muito além do histórico do chat atual.
+
+### 3.1. Tipos de Contato (Contact Type)
+
+Esta é a classificação principal que define o relacionamento do contato com a marca. É um campo crítico para a IA adaptar sua estratégia.
+-   `Lead`: Contato novo, pouco qualificado. A IA foca em qualificação e coleta de informações.
+-   `Prospect`: Lead qualificado, demonstrou interesse. A IA foca em conversão e agendamento.
+-   `Client`: Cliente ativo. A IA foca em suporte, satisfação e up-selling.
+-   `VIP`: Cliente de alto valor. A IA adota um tom mais personalizado e prioriza o atendimento.
+-   `Past Client`: Ex-cliente. A IA pode focar em reengajamento ou feedback.
+
+### 3.2. Categorias e Interesses
+
+-   **Categorias:** Tags internas para segmentação (ex: `Enterprise`, `Q4-Campaign`, `Support-Tier-1`).
+-   **Interesses:** Tópicos de interesse do contato (ex: `Generative AI`, `Cloud Computing`).
+
+### 3.3. Análise Multi-Fonte da IA
+
+Quando uma ferramenta de IA é acionada (Resumo, Enriquecimento, Follow-up), ela não analisa apenas o chat atual. O prompt enviado ao modelo de linguagem inclui:
+1.  **Histórico do Chat Atual.**
+2.  **Resumos de Conversas Anteriores.**
+3.  **Notas Internas** sobre o contato.
+4.  **Tipo de Contato, Categorias e Interesses** atuais.
+5.  **Status e histórico de comportamento** (ex: sentimento em chats passados).
+
+Isso garante que as sugestões da IA sejam profundamente contextualizadas e relevantes.
+
+---
+
+## 4. Sistema de Chat e Estados
+
+O chat é o coração operacional, organizado por estados para otimizar o fluxo de trabalho do atendente.
+
+### 4.1. Estados do Chat
+
+-   `Active`: Conversa em andamento, requer atenção imediata.
+-   `Awaiting Return`: O atendente respondeu e aguarda o retorno do cliente.
+-   `Closed`: A conversa foi resolvida e finalizada.
+-   `Archived`: Conversa fechada e armazenada para histórico, não aparece na lista principal.
+-   `AI-Assisted`: A IA está ativa, fornecendo sugestões em tempo real.
+
+Esses estados são fundamentais para os dashboards, permitindo que os atendentes filtrem e priorizem seu trabalho.
+
+---
+
+## 5. PWA do Cliente e Controle de Sessão
+
+A PWA oferece uma experiência de chat leve e sem atritos para o cliente final.
+
+### 5.1. Fluxo de Sessão
+
+1.  **Acesso e Identificação:** O cliente acessa via link e insere o número de telefone. Nenhuma conta é necessária. Uma breve **política de privacidade** é exibida, informando que o número é usado para identificar a sessão de chat.
+2.  **Validade da Sessão:** Uma sessão de chat permanece "ativa" por um período pré-definido (ex: 24 horas). Se o cliente retornar dentro desse período, ele continua a mesma conversa.
+3.  **Timeout e Reabertura:** Após o período de inatividade, o chat é movido para o estado `Closed`. Se o cliente com o mesmo número de telefone iniciar uma nova conversa, um novo chat é criado, mas vinculado ao histórico do contato, preservando o contexto para o atendente. Isso evita a reabertura infinita de chats antigos e mantém as conversas organizadas.
+
+### 5.2. Brand Context Injection
+
+Quando um novo chat é iniciado na PWA:
+1.  O sistema recupera as informações da marca (Tom de Voz, Hard e Soft Rules).
+2.  Um fluxo de IA (`generate-initial-greeting`) é acionado, recebendo o contexto da marca como parte do prompt.
+3.  A IA gera uma saudação inicial que reflete a personalidade da marca, garantindo uma experiência consistente desde o primeiro contato.
+
+---
+
+## 6. Ferramentas de IA e Automação
+
+### 6.1. Resumo, Enriquecimento e Follow-Up
+
+Conforme descrito na seção 3.3, essas ferramentas usam um contexto multi-fonte para gerar:
+-   **Resumos:** Visão geral, itens de ação e análise de sentimento.
+-   **Enriquecimento:** Sugestões de novos `Interesses`, `Categorias` ou mudança de `Contact Type`.
+-   **Follow-ups:** Rascunhos de e-mail e WhatsApp.
+
+### 6.2. Sistema de Notificações e Eventos
+
+Para completar o ciclo de automação, o sistema de follow-up também inclui:
+-   **Notificações Internas:** Se a IA identifica um item de ação com prazo (ex: "Enviar proposta até sexta-feira"), o sistema cria uma notificação no painel do atendente responsável.
+-   **Agendamento de Eventos:** A IA pode sugerir a criação de um evento no Google Calendar, pré-preenchendo título, descrição e convidados com base no contexto da conversa, aguardando apenas a confirmação do atendente.
+
+---
+
+## 7. Logs de IA e Auditoria
+
+Para garantir transparência, depuração e melhoria contínua, cada ação da IA é registrada no Firestore.
+
+### 7.1. Estrutura do Log (`/ai_logs/{logId}`)
+
+-   `flowName`: Nome do fluxo Genkit acionado (ex: `generateChatSummaryFlow`).
+-   `modelUsed`: Modelo de linguagem utilizado (ex: `gemini-2.5-flash`).
+-   `inputHash`: Hash do objeto de entrada para referência.
+-   `outputJSON`: O JSON bruto retornado pelo modelo.
+-   `userAction`: Ação do atendente (`accepted` ou `dismissed`), se aplicável.
+-   `timestamp`: Data e hora da execução.
+
+---
+
+## 8. Estrutura de Dados no Firestore
+
+```
+/brands/{brandId}
+  - brandName: string
+  - brandTone: string
+  - hardRules: string
+  - softRules: string
+  - ownerId: string
+
+/users/{userId}
+  - name: string
+  - email: string
+  - brandId: string
+
+/contacts/{contactId}
+  - name: string
+  - email: string
+  - phone: string
+  - contactType: string ('Lead', 'Client', etc.)
+  - brandId: string
+  - categories: array<string>
+  - interests: array<string>
+  - notes: string
+
+/chats/{chatId}
+  - contactId: string
+  - brandId: string
+  - attendantId: string
+  - status: string ('Active', 'Closed', etc.)
+  - lastMessageTimestamp: timestamp
+  - /messages/{messageId}
+    - sender: string
+    - content: string
+    - timestamp: timestamp
+  - /summaries/{summaryId}
+    - summaryText: string
+    - actionItems: array<string>
+    - sentiment: string ('Positive', 'Neutral', 'Negative')
+    - createdAt: timestamp
+
+/ai_logs/{logId}
+  - flowName: string
+  - modelUsed: string
+  - inputHash: string
+  - outputJSON: string
+  - userAction: string ('accepted', 'dismissed')
+  - timestamp: timestamp
+```

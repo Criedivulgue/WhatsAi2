@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useParams, useRouter } from 'next/navigation';
 import {
   MessageSquare,
   Users,
@@ -26,8 +26,9 @@ import {
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useUser } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 const navItems = [
   { href: '/dashboard', icon: MessageSquare, label: 'Chat' },
@@ -40,9 +41,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const userAvatar = PlaceHolderImages[0];
-  const { user } = useUser();
+  const params = useParams();
+  const router = useRouter();
+  const auth = useAuth();
   const { toast } = useToast();
+  const userAvatar = PlaceHolderImages[0];
+  const user = auth.currentUser;
+  
+  const brandIdFromUrl = params.brandId;
+
+  useEffect(() => {
+    if (user && brandIdFromUrl && user.uid === brandIdFromUrl) {
+      toast({
+        title: 'Ação Inválida',
+        description:
+          'O link do cliente é para seus usuários. Você foi redirecionado para seu painel.',
+      });
+      router.push('/dashboard');
+    }
+  }, [user, brandIdFromUrl, router, toast]);
 
   const handleCopyLink = () => {
     if (user) {

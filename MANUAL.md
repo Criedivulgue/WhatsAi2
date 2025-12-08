@@ -1,94 +1,150 @@
-# Manual da Aplicação: WhatsAi
+# Application Manual: WhatsAi
 
-## 1. Objetivo Principal
+## 1. Core Objective
 
-O WhatsAi é uma plataforma completa e inteligente de gerenciamento de contatos e atendimento ao cliente via chat. O objetivo principal é centralizar a comunicação, otimizar o tempo dos atendentes e enriquecer o relacionamento com os clientes através do uso estratégico de Inteligência Artificial. A aplicação foi desenhada para ser intuitiva, poderosa e adaptável às necessidades de cada marca.
+WhatsAi is an intelligent, all-in-one platform for contact management and customer service via chat. Its primary goal is to centralize communication, optimize attendant efficiency, and enrich customer relationships through the strategic use of Artificial Intelligence. The application is designed to be intuitive, powerful, and adaptable to the needs of any brand.
 
-## 2. Funcionalidades Principais
+## 2. Core Features
 
-O WhatsAi é composto por um ecossistema de funcionalidades que se integram para oferecer uma experiência de atendimento e gestão de alto nível.
+WhatsAi is composed of an integrated ecosystem of features designed to deliver a high-level service and management experience.
 
-### 2.1. Fluxo de Onboarding Guiado
+### 2.1. Guided Onboarding Flow
 
-Para garantir que cada usuário extraia o máximo da plataforma desde o primeiro dia, o WhatsAi implementa um fluxo de onboarding obrigatório e intuitivo.
+To ensure every user maximizes the platform's potential from day one, WhatsAi implements a mandatory and intuitive onboarding process.
 
-- **Coleta de Informações da Marca:** O usuário insere o nome da marca, descreve seu tom de voz (ex: "amigável e profissional", "formal e direto") e define regras de comunicação (ex: "nunca oferecer descontos não aprovados").
-- **Detalhes do Atendente:** Coleta de informações básicas do atendente para personalizar a experiência.
-- **Configuração da IA:** O usuário pode definir o comportamento padrão do assistente de IA, como ativar resumos automáticos de conversas, sugestões de enriquecimento de perfil e geração de follow-ups.
-- **Geração de Meta Tags:** Com base nas informações da marca, o sistema gera automaticamente as meta tags Open Graph (OG) para o chat do cliente, garantindo que o link do chat, quando compartilhado, exiba uma pré-visualização profissional e informativa em redes sociais e aplicativos de mensagem.
+-   **Brand Information Collection:** The user inputs the brand name, describes its tone of voice (e.g., "friendly and professional," "formal and direct"), and defines communication rules (e.g., "never offer unapproved discounts").
+-   **Attendant Details:** Collects basic attendant information to personalize the experience.
+-   **AI Configuration:** Users can set default behaviors for the AI assistant, such as activating automatic conversation summaries, profile enrichment suggestions, and follow-up generation.
+-   **Meta Tag Generation:** Based on the brand information, the system automatically generates Open Graph (OG) meta tags for the client-facing chat. This ensures that when the chat link is shared, it displays a professional and informative preview on social media and messaging apps.
 
-### 2.2. Gerenciamento de Contatos (CRM)
+### 2.2. Contact Management (CRM)
 
-O coração do WhatsAi é um sistema robusto para organizar, editar e analisar contatos.
+The heart of WhatsAi is a robust system for organizing, editing, and analyzing contacts.
 
-- **Visão Unificada:** Todos os contatos são listados em uma interface clara e organizada, com informações essenciais visíveis de imediato.
-- **Importação e Adição:** É possível importar listas de contatos existentes ou adicionar novos manualmente.
-- **Edição Completa:** Cada perfil de contato pode ser editado para adicionar/alterar nome, e-mail, telefone, status, categorias, interesses e notas internas.
-- **Armazenamento Seguro:** Todos os dados dos contatos e seus metadados são armazenados de forma segura no Firestore.
+-   **Unified View:** All contacts are listed in a clean, organized interface with essential information immediately visible.
+-   **Import and Add:** Users can import existing contact lists or add new ones manually.
+-   **Complete Editing:** Each contact profile can be edited to add/change name, email, phone, status, categories, interests, and internal notes.
+-   **Secure Storage:** All contact data and metadata are securely stored in Firestore.
 
-### 2.3. Interface de Chat para Atendentes
+### 2.3. Attendant Chat Interface
 
-O dashboard principal oferece um ambiente de chat projetado para máxima eficiência.
+The main dashboard provides a chat environment designed for maximum efficiency.
 
-- **Visualização Lado a Lado:** A tela é dividida em três painéis: lista de chats, janela de conversa ativa e painel de informações do contato.
-- **Atualizações em Tempo Real:** As mensagens são atualizadas em tempo real, sem a necessidade de recarregar a página.
-- **Gerenciamento de IA:** O atendente pode ativar ou desativar o suporte da IA diretamente na interface de chat.
-- **Edição Inline:** O painel do contato permite edições rápidas sem sair da tela de chat, mantendo o foco na conversa.
+-   **Side-by-Side Layout:** The screen is divided into three panels: chat list, active conversation window, and contact information panel.
+-   **Real-Time Updates:** Messages are updated in real-time without needing to reload the page, powered by Firestore's realtime listeners.
+-   **AI Control Toggling:** The attendant can activate or deactivate AI support directly within the chat interface, switching between human-only and AI-assisted interaction.
+-   **Inline Editing:** The contact panel allows for quick edits without leaving the chat screen, maintaining focus on the conversation.
 
-### 2.4. Resumo de Conversa com IA
+### 2.4. AI-Powered Chat Summarization
 
-Ao final de cada interação significativa, o atendente pode solicitar à IA que gere um resumo estruturado da conversa.
+At the end of each significant interaction, the attendant can request the AI to generate a structured summary of the conversation.
 
-- **Sumarização Automática:** A IA analisa o diálogo e cria um resumo conciso dos pontos principais.
-- **Extração de Itens de Ação:** O sistema identifica e lista tarefas ou compromissos acordados durante a conversa (ex: "Enviar proposta até sexta-feira").
-- **Memória Persistente:** Os resumos são salvos no histórico do cliente, permitindo que qualquer atendente futuro tenha contexto imediato sobre interações passadas.
+-   **Automatic Summarization:** The AI analyzes the dialogue and creates a concise summary of the main points.
+-   **Action Item Extraction:** The system identifies and lists tasks or commitments agreed upon during the conversation (e.g., "Send proposal by Friday").
+-   **Sentiment Analysis (Optional):** The attendant can enable sentiment evaluation, where the AI provides an assessment of the customer's sentiment (e.g., Positive, Neutral, Negative) based on the language used.
+-   **Persistent Memory:** Summaries are saved in the client's history, allowing any future attendant to have immediate context on past interactions.
 
-### 2.5. Enriquecimento de Perfil com IA
+### 2.5. AI-Driven Profile Enrichment
 
-Durante ou após uma conversa, a IA pode analisar o conteúdo para sugerir melhorias no perfil do contato.
+During or after a conversation, the AI can analyze the content to suggest improvements to the contact's profile.
 
-- **Sugestão de Interesses e Categorias:** Com base nos tópicos discutidos, a IA sugere novos interesses (ex: "interesse em IA generativa") ou ajusta a categoria do contato (ex: de "Lead" para "Lead Qualificado").
-- **Insights de Oportunidade:** A IA identifica potenciais oportunidades de negócio mencionadas na conversa.
-- **Aprovação do Atendente:** As sugestões são apresentadas ao atendente, que pode aceitá-las com um clique para atualizar o perfil do contato, ou descartá-las.
+-   **Interest and Category Suggestions:** Based on the topics discussed, the AI suggests new interests (e.g., "interest in generative AI") or adjusts the contact's category (e.g., from "Lead" to "Qualified Lead").
+-   **Opportunity Insights:** The AI identifies potential business opportunities mentioned in the conversation.
+-   **Attendant Approval:** Suggestions are presented to the attendant, who can accept them with a click to update the contact's profile or dismiss them.
 
-### 2.6. Sugestões Inteligentes de Acompanhamento (Follow-Up)
+### 2.6. Intelligent Follow-Up Suggestions
 
-Para otimizar o pós-atendimento, a IA gera sugestões personalizadas de follow-up.
+To optimize post-service engagement, the AI generates personalized follow-up suggestions.
 
-- **Rascunhos de E-mail e WhatsApp:** Cria rascunhos de mensagens de acompanhamento, adaptados ao tom da marca e ao contexto da conversa.
-- **Recomendações de Próximos Passos:** Sugere a melhor ação seguinte, como agendar uma ligação ou enviar material adicional.
-- **Criação de Eventos:** Propõe a criação de eventos no Google Calendar, já com título, descrição e convidados preenchidos, para agendar reuniões ou lembretes.
+-   **Email and WhatsApp Drafts:** Creates drafts of follow-up messages, adapted to the brand's tone and the conversation's context.
+-   **Next-Step Recommendations:** Suggests the best subsequent action, such as scheduling a call or sending additional material.
+-   **Event Creation:** Proposes creating Google Calendar events with pre-filled titles, descriptions, and guest lists to schedule meetings or reminders.
 
-### 2.7. Chat PWA para Clientes
+### 2.7. PWA Chat for Clients
 
-O WhatsAi oferece uma rota de chat leve e otimizada para o cliente final, funcionando como um Progressive Web App (PWA).
+WhatsAi offers a lightweight and optimized chat route for the end client, functioning as a Progressive Web App (PWA).
 
-- **Acesso Simplificado:** O cliente acessa através de um link e precisa apenas informar seu número de telefone para iniciar a conversa.
-- **Identidade Visual da Marca:** A interface exibe as meta tags Open Graph da marca, reforçando a credibilidade.
-- **Saudação Automática com IA:** Ao entrar no chat, o cliente é recebido por uma mensagem automática e amigável gerada pela IA, que o orienta sobre como proceder.
-- **Mensagens em Tempo Real e Offline:** A tecnologia PWA garante uma experiência de chat fluida e com suporte para mensagens mesmo em conexões instáveis.
+-   **Simplified Access:** The client accesses via a link and only needs to provide their phone number to start the conversation. No signup or account creation is required. The phone number serves as the temporary session identifier.
+-   **Brand Identity:** The interface displays the brand's Open Graph meta tags, reinforcing credibility.
+-   **Automatic AI Greeting:** Upon entering the chat, the client is welcomed by a friendly, automatic message generated by the AI, which guides them on how to proceed.
+-   **Real-Time and Offline Messaging:** PWA technology ensures a fluid chat experience with support for sending messages even with unstable connections.
 
-## 3. Guia de Uso Rápido
+## 3. Style Guidelines
 
-### Primeiros Passos: Onboarding
-1.  Acesse a aplicação pela primeira vez.
-2.  Preencha as informações da sua marca, tom de voz e regras.
-3.  Insira seus dados como atendente.
-4.  Configure as automações de IA desejadas.
-5.  Ao finalizar, você será redirecionado para o dashboard principal.
+The application's visual identity is designed to be clean, modern, and trustworthy.
 
-### Navegando pelo Dashboard
-- **Menu Lateral:** Use os ícones para navegar entre o **Chat** e a área de **Contatos**.
-- **Painel de Chat:** Gerencie todas as suas conversas em andamento. Selecione um chat na lista à esquerda para abri-lo na janela central.
-- **Painel de Contatos:** Visualize, edite, adicione ou importe seus contatos.
+-   **Primary Color:** Sea Green (`#30D155`) - Used for primary actions, buttons, and active states.
+-   **Background Color:** Light Green (`#E5F8E8`) - A soft, unobtrusive color for the main application background.
+-   **Accent Color:** Forest Green (`#6ACC7C`) - Used for subtle highlights, secondary information, and interactive elements.
+-   **Typography:**
+    -   **Body & Headings:** PT Sans is used for all UI text for its warm, modern readability. A clear typographic scale (e.g., 14px, 16px, 20px, 24px) establishes a strong visual hierarchy.
+    -   **Code:** Source Code Pro is used for displaying code snippets or technical text.
+-   **Iconography:** Minimalist, line-art icons (such as Lucide React) are used to provide clear, intuitive visual cues without cluttering the interface.
+-   **Layout:**
+    -   The layout is responsive, ensuring a seamless experience on desktop, tablet, and mobile devices.
+    -   Consistent spacing and sizing rules (based on a 4px or 8px grid) are applied to maintain a clean and organized structure.
 
-### Utilizando as Ferramentas de IA
-1.  Dentro de uma conversa ativa, no painel direito (Perfil do Contato), localize a seção "Ferramentas do Assistente de IA".
-2.  Use as abas para:
-    - **Resumo:** Gerar um resumo e itens de ação da conversa atual.
-    - **Enriquecer:** Obter sugestões de novos interesses, categorias e notas para o perfil do contato.
-    - **Acompanhamento:** Gerar rascunhos de e-mail, mensagens de WhatsApp e sugestões de próximos passos.
+## 4. Technical Architecture
 
-### A Experiência do Cliente
-- Compartilhe o link do seu chat PWA com seus clientes.
-- Eles informarão o número de telefone e serão instantaneamente conectados a um novo chat, onde a IA fará a saudação inicial antes que um atendente assuma.
+This section provides an overview of the technical foundation of WhatsAi.
+
+### 4.1. Global System Architecture
+
+WhatsAi is built on a modern, serverless stack:
+
+-   **Frontend:** A Next.js application using the App Router, React, and TypeScript.
+-   **UI:** Built with ShadCN UI components and styled with Tailwind CSS.
+-   **Backend:** Firebase serves as the primary backend, providing Firestore for the database and Firebase Authentication.
+-   **AI:** Google's Genkit is used to create and manage AI flows that connect to Large Language Models (LLMs) like Gemini.
+
+### 4.2. Module-Based Structure
+
+The application is organized into logical modules:
+-   `src/app/(dashboard)`: Contains all routes and components for the main attendant dashboard (chat, contacts).
+-   `src/app/client-chat`: The lightweight PWA for end-clients.
+-   `src/components`: Reusable React components (UI elements, chat components, etc.).
+-   `src/lib`: Core utilities, type definitions (`types.ts`), and mock data.
+-   `src/ai`: Contains all Genkit flows for AI features, separated by functionality (e.g., `generate-chat-summary.ts`).
+-   `src/firebase`: Configuration and hooks for connecting to Firebase services.
+
+### 4.3. System Workflows
+
+**Onboarding & Chat Workflow:**
+1.  **Onboarding:** A new user completes the multi-step onboarding form. On submission, this data is saved to a `brands` collection in Firestore.
+2.  **Dashboard Access:** The user is redirected to the dashboard, where they can access the chat and contacts modules.
+3.  **Chat Interaction:** The attendant selects a chat. Messages are fetched from Firestore in real-time. New messages are written directly to Firestore, triggering updates for all participants.
+4.  **AI Tools:** The attendant can trigger AI flows (Summarize, Enrich, Follow-Up) from the contact panel. These server-side Genkit flows receive context (like chat history), call the LLM, and return structured JSON data.
+5.  **PWA Client:** An end-user accesses the PWA link, enters their phone number, and a new chat document is created in Firestore, linking their phone number to the conversation.
+
+**AI Tool Execution Flow:**
+1.  **User Action:** Attendant clicks an AI tool button (e.g., "Generate Summary").
+2.  **Client-Side Request:** The client sends the relevant context (chat history, contact data) to a Next.js Server Action.
+3.  **Server Action (Genkit Flow):** The Server Action invokes the corresponding Genkit flow (e.g., `generateChatSummary`).
+4.  **LLM Call:** The Genkit flow formats the data into a prompt, sends it to the LLM (Gemini), and specifies the desired JSON output schema.
+5.  **Structured Response:** The LLM returns a structured JSON object.
+6.  **Display & Approval:** The client receives the JSON and displays the suggestions (e.g., new interests, summary text) in the UI. For profile enrichments, "Accept" or "Dismiss" buttons are shown.
+7.  **Firestore Update:** If the attendant accepts a suggestion, a client-side function updates the relevant document in Firestore (e.g., adds a new interest to the contact's `interests` array).
+
+### 4.4. Firestore Data Structure
+
+-   `/brands/{brandId}`: Stores information collected during onboarding (brand name, tone, rules).
+-   `/users/{userId}`: Stores attendant user data, linked to a brand.
+-   `/contacts/{contactId}`: Stores all contact information (name, email, phone, status, categories, interests, notes). Each contact is associated with a `brandId`.
+-   `/chats/{chatId}`: Contains metadata for a conversation, including a reference to the `contactId`.
+    -   `/chats/{chatId}/messages/{messageId}`: A sub-collection containing individual chat messages (sender, content, timestamp).
+    -   `/chats/{chatId}/summaries/{summaryId}`: A sub-collection for storing historical AI-generated summaries.
+
+**Indexes:** Composite indexes are required for querying contacts by status and category simultaneously, and for ordering chats by the timestamp of the last message.
+
+### 4.5. PWA & Real-time Updates
+
+-   **PWA Routing:** The `/client-chat` route is a standalone entry point. It does not require authentication. The phone number provided by the user is used to either find an existing chat or create a new one.
+-   **Real-time Pipeline:** Both the attendant dashboard and the PWA client use Firestore's `onSnapshot` listener to subscribe to changes in the `/chats/{chatId}/messages` sub-collection. When a new document is added, Firestore pushes the update to all subscribed clients, resulting in a real-time chat experience.
+
+### 4.6. Security Rules
+
+Firestore security rules are critical for protecting data:
+-   Attendants can only read/write data associated with their `brandId`.
+-   Contacts, chats, and messages can only be accessed by users belonging to the same brand.
+-   PWA clients (unauthenticated) are granted limited write access only to the `/chats/{chatId}/messages` collection for the specific chat session they initiated. They cannot read other chats or access contact data.
+-   Rules ensure that data writes conform to the expected schema (e.g., a message must have a `text` and `timestamp` field).

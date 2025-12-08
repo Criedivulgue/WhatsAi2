@@ -30,7 +30,19 @@ export {
   useFirebaseApp,
 } from './provider';
 
-const firebaseConfig = {
+const getServerFirebaseConfig = () => {
+  if (process.env.FIREBASE_CONFIG) {
+    try {
+      return JSON.parse(process.env.FIREBASE_CONFIG);
+    } catch (e) {
+      console.error("Failed to parse FIREBASE_CONFIG:", e);
+      return undefined; 
+    }
+  }
+  return undefined;
+}
+
+const firebaseConfig = getServerFirebaseConfig() || {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,

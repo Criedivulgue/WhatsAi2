@@ -13,6 +13,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from '@/components/ui/sheet';
 import { ContactForm } from './components/contact-form';
 import { ScrollArea } from '@/components/ui/scroll-area';

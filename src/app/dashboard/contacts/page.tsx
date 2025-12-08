@@ -43,6 +43,7 @@ export default function ContactsPage() {
   const { data: contactsData, loading: contactsLoading } =
     useCollection<Contact>(contactsQuery);
   const isLoading = userLoading || userDataLoading || contactsLoading;
+  const isButtonDisabled = userLoading || userDataLoading;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -51,8 +52,12 @@ export default function ContactsPage() {
         <div className="flex items-center space-x-2">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
+              <Button disabled={isButtonDisabled}>
+                {isButtonDisabled ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                )}
                 Adicionar Contato
               </Button>
             </SheetTrigger>

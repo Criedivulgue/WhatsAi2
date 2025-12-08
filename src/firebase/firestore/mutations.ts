@@ -1,21 +1,25 @@
 'use client';
 
-import { doc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch, type Firestore } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
   type Auth,
 } from 'firebase/auth';
-import { useFirestore } from '../provider';
 import type { OnboardingData } from '@/lib/types';
 
 /**
  * Creates a new brand and a new user (attendant) in a single transaction.
  * This is the primary function for the onboarding flow.
  * @param auth The Firebase Auth instance.
+ * @param firestore The Firestore instance.
  * @param data The complete data from the onboarding form.
  */
-export async function createBrandAndUser(auth: Auth, data: OnboardingData) {
+export async function createBrandAndUser(
+  auth: Auth,
+  firestore: Firestore,
+  data: OnboardingData
+) {
   const {
     attendantEmail,
     password,
@@ -30,8 +34,6 @@ export async function createBrandAndUser(auth: Auth, data: OnboardingData) {
   if (!password) {
     throw new Error('A senha é obrigatória para criar um novo usuário.');
   }
-
-  const firestore = useFirestore();
 
   // Step 1: Create the user in Firebase Authentication
   const userCredential = await createUserWithEmailAndPassword(

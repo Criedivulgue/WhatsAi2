@@ -30,7 +30,7 @@ import Logo from './logo';
 import { Switch } from './ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { createBrandAndUser } from '@/firebase/firestore/mutations';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 
 const brandSchema = z.object({
@@ -80,6 +80,7 @@ export default function OnboardingFlow() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(formSteps[step].schema),
@@ -119,7 +120,7 @@ export default function OnboardingFlow() {
   const onSubmit = async (data: OnboardingFormValues) => {
     setIsLoading(true);
     try {
-      await createBrandAndUser(auth, data);
+      await createBrandAndUser(auth, firestore, data);
       toast({
         title: 'Configuração concluída!',
         description: 'Seu espaço de trabalho foi criado com sucesso.',

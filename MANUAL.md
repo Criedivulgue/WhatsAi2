@@ -1,124 +1,65 @@
-# Manual Técnico: WhatsAi
+# Manual Técnico do WhatsAi
 
-## 1. Visão Geral e Arquitetura
+## Visão Geral
 
-O WhatsAi é uma plataforma inteligente para gestão de identidade de marca e relacionamento com o cliente, operada por um único atendente. Construída sobre uma arquitetura moderna que combina Next.js, Firebase e Genkit (Google AI), seu objetivo é centralizar a comunicação, otimizar a eficiência do atendente e enriquecer os perfis de contato com inteligência artificial.
+O WhatsAi é uma aplicação web moderna para gestão de relacionamento com o cliente, construída com Next.js e Firebase. O sistema é projetado para um **único atendente** que gerencia sua própria marca, contatos e interações de chat.
 
-### 1.1. Arquitetura Implementada
+A arquitetura utiliza o App Router do Next.js, Server Components, e Server Actions para lógica de backend, hospedada de forma integrada no Firebase App Hosting. O Firebase é utilizado para autenticação, banco de dados (Firestore) e armazenamento de arquivos (Storage).
 
-A arquitetura atual é focada na simplicidade e no poder da integração entre o frontend e o backend no mesmo ambiente.
+## Estrutura do Projeto
 
-```
-[Firebase Backend] <------> [Next.js App (App Router + Server Actions)] <------> [React Frontend (Onboarding & Dashboard)]
-       |                            |                                                |
-   [Firestore DB] <--- [Firebase Client SDK] -----------------------------------> [ShadCN UI]
-       |                            |                                                |
- [Authentication] <---- [Genkit AI Flows (em Server Actions)] ------------------> [Tailwind CSS]
-```
+-   `/src/app`: Rotas da aplicação (App Router).
+    -   `/`: Página de Onboarding/Login.
+    -   `/dashboard`: Layout e páginas principais do atendente.
+    -   `/client-chat/[brandId]`: PWA de chat para o cliente final.
+-   `/src/components`: Componentes React reutilizáveis (UI e de funcionalidade).
+-   `/src/firebase`: Configuração e hooks do Firebase.
+-   `/src/ai`: Fluxos de IA com Genkit, executados via Server Actions.
+-   `/docs/backend.json`: Define as entidades de dados para o Firestore.
+-   `/firestore.rules`: Regras de segurança do banco de dados.
 
--   **Backend (Firebase):** Firestore armazena dados da marca, do atendente, dos contatos e dos chats. Firebase Authentication gerencia a identidade do atendente. Storage armazena o avatar.
--   **Aplicação Next.js (App Hosting):** A aplicação é executada em um ambiente unificado. O App Router gerencia as rotas do frontend. As **Server Actions** (`/src/app/actions.ts`) invocam os fluxos de IA do Genkit diretamente no servidor, eliminando a necessidade de Cloud Functions separadas.
--   **Frontend (React):** O fluxo de Onboarding, o Dashboard do atendente e a PWA do cliente são construídos com React, componentes ShadCN e estilização com Tailwind CSS. Os dados são consumidos em tempo real do Firestore.
--   **Inteligência Artificial (Genkit):** Os fluxos de IA (`/src/ai/flows/`) são definidos como parte da aplicação Next.js e são acionados pelas Server Actions, de forma integrada.
+## Fluxo de Dados e Componentes
 
-### 1.2. Estrutura de Arquivos
+### 1. Onboarding e Autenticação
 
-A estrutura de arquivos reflete essa abordagem integrada.
+-   **Fluxo**: Um novo atendente acessa a página inicial e passa por um fluxo de onboarding obrigatório (`/src/components/onboarding-flow.tsx`).
+-   **Dados Coletados**: Nome da marca, slogan, avatar, nome do atendente e credenciais de login.
+-   **Ação**: A função `createBrandAndUser` (`/src/firebase/firestore/mutations.ts`) é chamada.
+    -   Cria um usuário no Firebase Auth.
+    -   Faz upload do avatar para o Firebase Storage.
+    -   Cria um documento `user` e um `brand` no Firestore, usando o UID do usuário como ID para ambos, estabelecendo a relação 1:1.
+-   **Redirecionamento**: Após o sucesso, o atendente é redirecionado para `/dashboard`.
 
-```
-/src
-|-- /app
-|   |-- /(dashboard)       # Rotas e layouts do painel do atendente
-|   |-- /client-chat       # Layout e página da PWA do cliente
-|   |-- /api/genkit        # API Route (usada pelo Genkit para expor fluxos)
-|   `-- actions.ts         # Server Actions que invocam os fluxos de IA
-|-- /ai
-|   `-- /flows             # Definições dos fluxos de IA com Genkit (o "backend" da IA)
-|-- /components
-|   |-- /chat              # Componentes do sistema de chat
-|   |-- /onboarding-flow.tsx # Componente de fluxo de cadastro
-|   `-- /ui                # Componentes reutilizáveis (ShadCN)
-|-- /firebase
-|   |-- config.ts          # Configuração de conexão com o Firebase
-|   |-- mutations.ts       # Funções para escrever dados no Firestore
-|   `-- provider.tsx       # Provedor de contexto do Firebase
-`-- MANUAL.md              # Este documento
-```
+### 2. Painel do Atendente
 
----
+-   **Layout Principal** (`/src/app/dashboard/layout.tsx`):
+    -   Verifica a autenticação do usuário.
+    -   Busca os dados do `user` e `brand` do Firestore para exibir informações como o nome e o avatar do atendente no cabeçalho.
+    -   Fornece navegação para as seções de Chat e Contatos.
+    -   Inclui o botão "Copiar link do chat", que gera a URL pública (`/client-chat/[userId]`).
 
-## 2. Onboarding e Contexto da Marca
+-   **Página de Chats** (`/src/app/dashboard/page.tsx`):
+    -   Busca todos os chats associados ao `brandId` do atendente.
+    -   Busca os contatos para "hidratar" os chats com nomes e avatares.
+    -   Apresenta uma interface de três painéis (`ChatLayout`) para listar as conversas, exibir o chat ativo e mostrar os detalhes do contato.
 
-O fluxo de onboarding é a porta de entrada, onde o atendente define sua identidade de marca e cria sua conta. A relação é de **um atendente para uma marca**.
+-   **Página de Contatos** (`/src/app/dashboard/contacts/page.tsx`):
+    -   Exibe uma tabela com todos os contatos do atendente.
+    -   Permite a adição de novos contatos e a edição/exclusão dos existentes através de um painel lateral (`Sheet`).
 
-### 2.1. Coleta de Dados e Armazenamento
+### 3. Chat do Cliente (PWA)
 
-O formulário (`/src/components/onboarding-flow.tsx`) coleta os dados e, ao ser submetido, a função `createBrandAndUser` (`/src/firebase/firestore/mutations.ts`) realiza as seguintes ações:
--   Cria um novo usuário no **Firebase Authentication**.
--   Cria um documento para a marca na coleção `/brands`, usando o ID do usuário como ID do documento para criar um vínculo direto.
--   Cria um documento para o atendente na coleção `/users`, associando-o à marca.
+-   **Acesso**: O cliente final acessa a URL `dominio.com/client-chat/[brandId]`, onde `brandId` é o UID do atendente.
+-   **Fluxo**:
+    1.  A página (`/src/app/client-chat/[brandId]/page.tsx`) busca os dados públicos da `brand` (nome, slogan) e do `user` (avatar, nome do atendente) para exibir um "cartão de visitas".
+    2.  O cliente insere o número de telefone para se identificar.
+    3.  O sistema localiza ou cria um `contact` no Firestore.
+    4.  Um `chat` é localizado ou criado, vinculando o `contactId` e o `brandId`.
+    5.  Uma Server Action (`getInitialGreetingAction`) é chamada para gerar uma saudação inicial da IA, que é adicionada como a primeira mensagem.
+    6.  A interface de chat em tempo real é carregada, ouvindo a coleção de `messages` do chat no Firestore.
 
-**Status:** **Completo e Funcional**.
+### 4. Lógica de Servidor (Server Actions)
 
----
-
-## 3. Gestão de Contatos (CRM)
-
-O sistema de gestão de contatos permite ao atendente gerenciar todos os seus clientes.
-
-### 3.1. Estrutura de Dados do Contato
-
-O tipo `Contact` (`/src/lib/types.ts`) e o `backend.json` definem a estrutura do contato. A página de contatos (`/src/app/dashboard/contacts`) exibe uma lista de contatos do Firestore pertencentes à marca do atendente.
-
-### 3.2. Funcionalidades Implementadas
-
--   **CRUD de Contatos:** Os botões "Adicionar Contato", "Editar" e "Deletar" estão funcionais e realizam operações de escrita no Firestore.
--   **Visualização de Dados Reais:** A página de contatos exibe os contatos reais da coleção `/contacts` do Firestore.
-
----
-
-## 4. Sistema de Chat em Tempo Real
-
-A interface de chat é o coração do dashboard e está conectada em tempo real com o Firestore.
-
-### 4.1. Estrutura e Dados
-
--   O layout do chat (`/src/components/chat/chat-layout.tsx`) organiza a lista de conversas, a janela de chat e o painel de detalhes do contato.
--   A `ChatList` busca e exibe as conversas da coleção `/chats` em tempo real.
--   A `ChatWindow` busca e exibe as mensagens da subcoleção `/chats/{chatId}/messages` e permite o envio de novas mensagens pelo atendente.
--   O `ContactPanel` exibe os detalhes do contato selecionado.
-
-**Status:** **Completo e Funcional**.
-
----
-
-## 5. PWA do Cliente
-
-A PWA do cliente (`/client-chat/[brandId]`) permite que o usuário final inicie e mantenha uma conversa com a marca/atendente.
-
-### 5.1. Fluxo Atual
-
-1.  **Identificação:** A página solicita o número de telefone do cliente.
-2.  **Busca/Criação de Contato e Chat:** O sistema verifica se existe um contato com aquele número. Se não existir, um novo contato é criado. Em seguida, verifica se há um chat ativo para ele.
-3.  **Criação de Novo Chat:** Se não houver um chat ativo, um novo é criado na coleção `/chats`. Uma saudação inicial é gerada pela IA (`generateInitialGreeting`) e salva como a primeira mensagem.
-4.  **Chat em Tempo Real:** O cliente pode enviar e receber mensagens que são sincronizadas em tempo real com o dashboard do atendente.
-
-**Status:** **Completo e Funcional**.
-
----
-
-## 6. Ferramentas de IA e Automações (Via Server Actions)
-
-As ferramentas de IA no `ContactPanel` são acionadas via **Server Actions**, que executam os fluxos do Genkit no ambiente do servidor Next.js.
-
-### 6.1. Fluxo Atual
-
--   Os botões "Gerar Resumo", "Sugerir Enriquecimentos" e "Gerar Acompanhamentos" estão funcionais e invocam os respectivos fluxos de IA.
--   Os resultados são exibidos na interface do atendente.
-
-### 6.2. Funcionalidades Futuras
-
--   **Persistência dos Resultados da IA:** Salvar os resumos gerados na subcoleção `/chats/{chatId}/summaries` e os enriquecimentos aceitos no documento do contato.
--   **Mecanismo de Aceitar/Rejeitar:** Implementar a lógica nos botões para que o atendente possa aprovar ou descartar as sugestões de enriquecimento.
--   **Automações:** Implementar os switches de configuração de IA para acionar os fluxos automaticamente (ex: gerar resumo ao fechar um chat).
--   **Tratamento de Erros e Gerenciamento de Contexto.**
+-   **Ponto Central**: `/src/app/actions.ts`.
+-   **Funcionamento**: As Server Actions são funções `async` marcadas com `'use server'`. Elas são chamadas diretamente de componentes do cliente, mas executam exclusivamente no servidor (via App Hosting).
+-   **Exemplos**: `getInitialGreetingAction`, `getChatSummaryAction`. Essas ações importam e executam os fluxos de IA definidos em `/src/ai/flows/`. Isso elimina a necessidade de gerenciar Cloud Functions separadas para a lógica de negócio.

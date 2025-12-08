@@ -29,10 +29,14 @@ import { useFirestore } from '@/firebase';
 import { addContact, updateContact } from '@/firebase/firestore/contacts';
 import { useEffect } from 'react';
 
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
+
 const contactFormSchema = z.object({
   name: z.string().min(2, 'O nome é obrigatório.'),
   email: z.string().email('Email inválido.').optional().or(z.literal('')),
-  phone: z.string().min(8, 'O telefone é obrigatório.'),
+  phone: z.string().regex(phoneRegex, 'Número de telefone inválido.'),
   contactType: z.enum([
     'Lead',
     'Prospect',
@@ -66,6 +70,7 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
       contactType: 'Lead',
       notes: '',
     },
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -129,7 +134,7 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
             <FormItem>
               <FormLabel>Email (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="contato@exemplo.com" {...field} />
+                <Input type="email" placeholder="contato@exemplo.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -142,7 +147,7 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
             <FormItem>
               <FormLabel>Telefone</FormLabel>
               <FormControl>
-                <Input placeholder="+55 11 99999-9999" {...field} />
+                <Input type="tel" placeholder="+55 11 99999-9999" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

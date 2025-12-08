@@ -5,7 +5,7 @@ export type User = {
   name: string;
   email: string;
   brandId: string;
-  avatarUrl?: string;
+  avatarUrl: string;
   attendantPersona?: string;
 }
 
@@ -78,11 +78,13 @@ export type FollowUpSuggestions = {
 // Type for the onboarding form data
 export type OnboardingData = {
   brandName: string;
+  slogan?: string;
   brandTone: string;
   knowledgeBase?: string;
   hardRules?: string;
   softRules?: string;
   attendantName: string;
+  avatarUrl: string;
   attendantEmail: string;
   password?: string;
   autoSummarize: boolean;

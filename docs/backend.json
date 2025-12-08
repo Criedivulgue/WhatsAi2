@@ -64,7 +64,7 @@
           "description": "Optional persona description for the AI to adopt for this specific attendant."
         }
       },
-      "required": ["name", "email", "brandId"]
+      "required": ["name", "email", "brandId", "avatarUrl"]
     },
     "contact": {
       "title": "Contact",

@@ -26,7 +26,9 @@ export async function createBrandAndUser(
     attendantEmail,
     password,
     attendantName,
+    avatarUrl,
     brandName,
+    slogan,
     brandTone,
     knowledgeBase,
     hardRules,
@@ -48,8 +50,8 @@ export async function createBrandAndUser(
   );
   const user = userCredential.user;
 
-  // Step 2: Update the user's display name in their Auth profile
-  await updateProfile(user, { displayName: attendantName });
+  // Step 2: Update the user's display name and photo in their Auth profile
+  await updateProfile(user, { displayName: attendantName, photoURL: avatarUrl });
 
   // Step 3: Use a batch write to create brand and user docs in Firestore atomically
   const batch = writeBatch(firestore);
@@ -58,6 +60,7 @@ export async function createBrandAndUser(
   const brandRef = doc(firestore, 'brands', user.uid); // Using user's UID as brand ID for simplicity
   batch.set(brandRef, {
     brandName,
+    slogan: slogan || '',
     brandTone,
     knowledgeBase: knowledgeBase || '',
     hardRules: hardRules || '',
@@ -76,6 +79,7 @@ export async function createBrandAndUser(
     name: attendantName,
     email: attendantEmail,
     brandId: brandRef.id,
+    avatarUrl: avatarUrl,
   });
 
   // Step 4: Commit the batch write

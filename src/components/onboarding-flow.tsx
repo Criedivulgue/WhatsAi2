@@ -32,9 +32,11 @@ import { useToast } from '@/hooks/use-toast';
 import { createBrandAndUser } from '@/firebase/firestore/mutations';
 import { useAuth, useFirestore } from '@/firebase';
 import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 const brandSchema = z.object({
   brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
+  slogan: z.string().optional(),
   brandTone: z.string().min(10, 'Por favor, descreva o tom da sua marca.'),
   knowledgeBase: z.string().optional(),
   hardRules: z.string().optional(),
@@ -43,6 +45,7 @@ const brandSchema = z.object({
 
 const detailsSchema = z.object({
   attendantName: z.string().min(2, 'Seu nome é obrigatório.'),
+  avatarUrl: z.string().url('Por favor, insira uma URL de imagem válida.'),
   attendantEmail: z.string().email('Endereço de e-mail inválido.'),
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
 });
@@ -60,12 +63,12 @@ type OnboardingFormValues = z.infer<typeof formSchema>;
 const formSteps = [
   {
     title: 'Informações da Marca',
-    fields: ['brandName', 'brandTone', 'knowledgeBase', 'hardRules', 'softRules'],
+    fields: ['brandName', 'slogan', 'brandTone', 'knowledgeBase', 'hardRules', 'softRules'],
     schema: brandSchema,
   },
   {
     title: 'Seus Detalhes',
-    fields: ['attendantName', 'attendantEmail', 'password'],
+    fields: ['attendantName', 'avatarUrl', 'attendantEmail', 'password'],
     schema: detailsSchema,
   },
   {
@@ -87,11 +90,13 @@ export default function OnboardingFlow() {
     resolver: zodResolver(formSchema), // Validate the entire schema on submit
     defaultValues: {
       brandName: '',
+      slogan: '',
       brandTone: 'Amigável e profissional, com uma abordagem prestativa.',
       knowledgeBase: 'Produtos: Plano Básico, Plano Pro, Plano Empresarial. Horário de Atendimento: 9h às 18h, Seg-Sex.',
       hardRules: 'Nunca prometer funcionalidades que não existem; Não usar gírias.',
       softRules: 'Usar emojis com moderação; Sempre saudar o cliente pelo nome.',
       attendantName: '',
+      avatarUrl: '',
       attendantEmail: '',
       password: '',
       autoSummarize: true,
@@ -101,7 +106,9 @@ export default function OnboardingFlow() {
     mode: 'onChange',
   });
 
-  const { trigger, handleSubmit, getValues } = form;
+  const { trigger, handleSubmit, getValues, watch } = form;
+  
+  const avatarUrl = watch('avatarUrl');
 
   const nextStep = async () => {
     const fieldsToValidate = formSteps[step].fields as (keyof OnboardingFormValues)[];
@@ -161,7 +168,7 @@ export default function OnboardingFlow() {
               </div>
               <Progress value={progressValue} className="w-full" />
             </CardHeader>
-            <CardContent className="min-h-[380px]">
+            <CardContent className="min-h-[420px]">
               {step === 0 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold font-headline">{formSteps[0].title}</h3>
@@ -173,6 +180,19 @@ export default function OnboardingFlow() {
                         <FormLabel>Nome da Marca</FormLabel>
                         <FormControl>
                           <Input placeholder="Sua Empresa" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="slogan"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slogan da Marca (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Sua frase de efeito aqui" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -191,48 +211,6 @@ export default function OnboardingFlow() {
                       </FormItem>
                     )}
                   />
-                   <FormField
-                    control={form.control}
-                    name="knowledgeBase"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base de Conhecimento (Opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="ex: Nossos produtos são X, Y, Z. Nossa política de devolução é..." {...field} />
-                        </FormControl>
-                        <FormDescription>Informações sobre seus produtos, serviços, políticas, etc.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="hardRules"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Regras Rígidas (Opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="ex: Nunca oferecer descontos..." {...field} />
-                        </FormControl>
-                        <FormDescription>Proibições que a IA não pode violar.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="softRules"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Regras Flexíveis (Opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="ex: Usar emojis com moderação..." {...field} />
-                        </FormControl>
-                        <FormDescription>Diretrizes de estilo que moldam a personalidade da IA.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
               )}
               {step === 1 && (
@@ -247,6 +225,26 @@ export default function OnboardingFlow() {
                         <FormControl>
                           <Input placeholder="Seu nome completo" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="avatarUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL da Imagem do seu Avatar</FormLabel>
+                         <div className="flex items-center gap-4">
+                           <Avatar className="h-16 w-16">
+                            <AvatarImage src={avatarUrl} alt="Avatar Preview" />
+                            <AvatarFallback>{getValues('attendantName')?.charAt(0) || 'A'}</AvatarFallback>
+                          </Avatar>
+                          <FormControl>
+                            <Input placeholder="https://exemplo.com/sua-foto.jpg" {...field} />
+                          </FormControl>
+                        </div>
+                        <FormDescription>Cole a URL para sua foto de perfil. Será seu cartão de visitas.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -282,57 +280,45 @@ export default function OnboardingFlow() {
               {step === 2 && (
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold font-headline">{formSteps[2].title}</h3>
-                  <FormField
+                   <FormField
                     control={form.control}
-                    name="autoSummarize"
+                    name="knowledgeBase"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Resumir Chats Automaticamente</FormLabel>
-                          <FormDescription>Gerar um resumo quando um chat termina.</FormDescription>
-                        </div>
+                      <FormItem>
+                        <FormLabel>Base de Conhecimento (Opcional)</FormLabel>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Textarea placeholder="ex: Nossos produtos são X, Y, Z. Nossa política de devolução é..." {...field} className="h-24"/>
                         </FormControl>
+                        <FormDescription>Informações sobre seus produtos, serviços, políticas, etc.</FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
+                   <FormField
                     control={form.control}
-                    name="autoEnrich"
+                    name="hardRules"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Sugerir Enriquecimento de Perfil</FormLabel>
-                          <FormDescription>Deixe a IA sugerir interesses e categorias.</FormDescription>
-                        </div>
+                      <FormItem>
+                        <FormLabel>Regras Rígidas (Opcional)</FormLabel>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Textarea placeholder="ex: Nunca oferecer descontos..." {...field} />
                         </FormControl>
+                        <FormDescription>Proibições que a IA não pode violar.</FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
+                   <FormField
                     control={form.control}
-                    name="autoFollowUp"
+                    name="softRules"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Gerar Ideias de Acompanhamento</FormLabel>
-                          <FormDescription>A IA irá redigir e-mails e mensagens.</FormDescription>
-                        </div>
+                      <FormItem>
+                        <FormLabel>Regras Flexíveis (Opcional)</FormLabel>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Textarea placeholder="ex: Usar emojis com moderação..." {...field} />
                         </FormControl>
+                        <FormDescription>Diretrizes de estilo que moldam a personalidade da IA.</FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />

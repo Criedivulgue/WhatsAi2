@@ -29,7 +29,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 export default function ClientChatPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [chatId, setChatId] = useState<string | null>(null);
-  const [contactId, setContactId] = useState<string | null>(-1);
+  const [contactId, setContactId] = useState<string | null>(null);
   const [chatStarted, setChatStarted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

@@ -3,10 +3,11 @@
 import { getInitialGreetingAction } from '@/app/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useCollection, useDoc, useFirestore } from '@/firebase';
-import type { Message, Brand } from '@/lib/types';
+import type { Message, Brand, User } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import {
   addDoc,
@@ -21,14 +22,14 @@ import {
   where,
   getDocs,
 } from 'firebase/firestore';
-import { ArrowUp, Bot, Loader2, User } from 'lucide-react';
+import { ArrowUp, Bot, Loader2, User as UserIcon } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function ClientChatPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [chatId, setChatId] = useState<string | null>(null);
-  const [contactId, setContactId] = useState<string | null>(null);
+  const [contactId, setContactId] = useState<string | null>(-1);
   const [chatStarted, setChatStarted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +38,14 @@ export default function ClientChatPage() {
   const firestore = useFirestore();
   const params = useParams();
   const brandId = params.brandId as string;
+
+  // Since brandId is the attendant's UID, we can fetch attendant data
+  const attendantUserRef = useMemo(() => {
+    if (!brandId) return null;
+    return doc(firestore, 'users', brandId);
+  }, [brandId, firestore]);
+  const { data: attendantData, loading: attendantLoading } = useDoc<User>(attendantUserRef);
+
 
   const brandRef = useMemo(() => {
     if (!brandId) return null;
@@ -53,6 +62,7 @@ export default function ClientChatPage() {
   }, [chatId, firestore]);
 
   const { data: messages } = useCollection<Message>(messagesQuery);
+  const userAvatar = PlaceHolderImages[0];
 
   const handleStartChat = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,14 +77,24 @@ export default function ClientChatPage() {
 
       let contactDoc;
       if (querySnapshot.empty) {
-        // This is a simplified flow. In a real app, you might want a proper "create contact" form
-        // For now, we'll assume the contact must exist.
-        alert('Número de telefone não encontrado para esta marca.');
-        setIsLoading(false);
-        return;
+        // For simplicity, we create a new contact if one doesn't exist.
+        // A real app might have a more complex flow here.
+        const newContactRef = doc(collection(firestore, 'contacts'));
+        await setDoc(newContactRef, {
+            name: `Novo Contato (${phoneNumber.slice(-4)})`,
+            phone: phoneNumber.trim(),
+            brandId: brandId,
+            contactType: 'Lead',
+            avatar: `avatar-${Math.floor(Math.random() * 6) + 1}`,
+            categories: [],
+            interests: [],
+            notes: '',
+        });
+        contactDoc = { id: newContactRef.id, data: () => ({ phone: phoneNumber.trim(), brandId }) };
+      } else {
+        contactDoc = querySnapshot.docs[0];
       }
       
-      contactDoc = querySnapshot.docs[0];
       const contact = { id: contactDoc.id, ...contactDoc.data() };
       setContactId(contact.id);
 
@@ -104,6 +124,7 @@ export default function ClientChatPage() {
         await setDoc(newChatRef, {
           contactId: contact.id,
           brandId: brandId,
+          attendantId: brandId, // Assign the brand owner as the attendant
           status: 'Active',
           lastMessageTimestamp: serverTimestamp(),
           lastMessageContent: initialGreeting.greeting,
@@ -163,29 +184,40 @@ export default function ClientChatPage() {
   }, [messages]);
 
   if (!chatStarted) {
+    const pageLoading = brandLoading || attendantLoading;
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">Bem-vindo ao Chat {brandData && `de ${brandData.brandName}`}</CardTitle>
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+        {pageLoading ? (
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        ) : (
+        <Card className="w-full max-w-md shadow-lg overflow-hidden">
+          <CardHeader className="bg-card p-6 flex flex-col items-center text-center">
+            <Avatar className='h-24 w-24 mb-4 border-4 border-white shadow-md'>
+                <AvatarImage src={userAvatar.imageUrl} alt={attendantData?.name} data-ai-hint={userAvatar.imageHint} />
+                <AvatarFallback className="text-3xl">{attendantData?.name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <CardTitle className="text-2xl">{brandData?.brandName}</CardTitle>
+            <CardDescription className="text-base">{attendantData?.name}</CardDescription>
+            <p className="text-sm text-muted-foreground mt-2 px-4">{brandData?.brandTone}</p>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-6 bg-white'>
             <form onSubmit={handleStartChat} className="space-y-4">
-              <p className="text-center text-muted-foreground">Por favor, insira seu número de telefone para começar.</p>
+              <p className="text-center text-muted-foreground">Insira seu número de telefone para iniciar a conversa.</p>
               <Input
                 type="tel"
-                placeholder="Seu número de telefone"
+                placeholder="(xx) xxxxx-xxxx"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 required
-                className="text-center"
+                className="text-center text-lg"
               />
-              <Button type="submit" className="w-full" disabled={isLoading || brandLoading}>
-                {isLoading || brandLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Chat'}
+              <Button type="submit" className="w-full !mt-6" size="lg" disabled={isLoading}>
+                {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Conversa'}
               </Button>
             </form>
           </CardContent>
         </Card>
+        )}
       </main>
     );
   }
@@ -194,14 +226,14 @@ export default function ClientChatPage() {
     <div className="flex h-screen flex-col bg-background">
       <header className="flex items-center gap-4 border-b bg-card p-4">
         <Avatar>
-          <AvatarImage src="https://picsum.photos/seed/brandlogo/40/40" data-ai-hint="logo abstrato" />
+          <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint} />
           <AvatarFallback>
             <Bot />
           </AvatarFallback>
         </Avatar>
         <div>
           <h2 className="text-lg font-semibold">{brandData?.brandName || "Suporte"}</h2>
-          <p className="text-sm text-muted-foreground">Estamos aqui para ajudar</p>
+          <p className="text-sm text-muted-foreground">Atendente: {attendantData?.name}</p>
         </div>
       </header>
 
@@ -214,8 +246,9 @@ export default function ClientChatPage() {
               message.sender === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
-            {(message.sender === 'assistant' || message.sender === 'ai') && (
+            {(message.sender === 'attendant' || message.sender === 'ai') && (
               <Avatar className="h-8 w-8">
+                 <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint} />
                 <AvatarFallback>
                   <Bot size={20} />
                 </AvatarFallback>
@@ -234,7 +267,7 @@ export default function ClientChatPage() {
             {message.sender === 'user' && (
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
-                  <User size={20} />
+                  <UserIcon size={20} />
                 </AvatarFallback>
               </Avatar>
             )}

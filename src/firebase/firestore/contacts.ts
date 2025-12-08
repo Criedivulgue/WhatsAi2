@@ -7,6 +7,7 @@ import {
   deleteDoc,
   doc,
   type Firestore,
+  setDoc,
 } from 'firebase/firestore';
 import type { Contact } from '@/lib/types';
 import { errorEmitter } from '../error-emitter';

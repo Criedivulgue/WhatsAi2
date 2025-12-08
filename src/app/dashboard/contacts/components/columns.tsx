@@ -53,17 +53,18 @@ export const columns: ColumnDef<Contact>[] = [
     header: 'Telefone',
   },
   {
-    accessorKey: 'status',
-    header: 'Status',
+    accessorKey: 'contactType',
+    header: 'Tipo',
     cell: ({ row }) => {
-      const status = row.original.status;
-      const variant = {
-        'Ativo': 'default',
-        'Novo': 'secondary',
-        'Bloqueado': 'destructive',
-      }[status] || 'outline';
-      
-      return <Badge variant={variant as any}>{status}</Badge>;
+        const type = row.original.contactType;
+        const variant = {
+            'Client': 'default',
+            'Prospect': 'secondary',
+            'Lead': 'outline',
+            'VIP': 'destructive', // Just for color variety
+            'Past Client': 'outline',
+        }[type] || 'outline';
+      return <Badge variant={variant as any}>{type}</Badge>;
     },
   },
   {

@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Chat } from '@/lib/types';
+import type { Chat, Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ArrowUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -36,15 +36,15 @@ export function ChatWindow({ chat }: ChatWindowProps) {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      setMessages([
-        ...messages,
-        {
-          id: messages.length + 1,
-          name: 'Atendente',
-          message: input,
-          avatar: 'avatar-1'
-        },
-      ]);
+      const newMessage: Message = {
+        id: messages.length + 1,
+        sender: 'attendant',
+        content: input,
+        timestamp: new Date(),
+        avatar: 'avatar-1' // This should be dynamic based on the logged-in user
+      };
+      
+      setMessages([...messages, newMessage]);
       setInput('');
     }
   };
@@ -52,12 +52,12 @@ export function ChatWindow({ chat }: ChatWindowProps) {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-4 border-b bg-card p-4">
-        <h2 className="text-xl font-bold">{chat.contact.name}</h2>
+        <h2 className="text-xl font-bold">{chat.contact?.name}</h2>
       </header>
       <div ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((message, index) => {
            const avatarData = PlaceHolderImages.find(p => p.id === message.avatar);
-           const isUser = message.name === 'Atendente';
+           const isUser = message.sender === 'attendant';
           return (
             <div
               key={index}
@@ -67,8 +67,8 @@ export function ChatWindow({ chat }: ChatWindowProps) {
               )}
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarData?.imageUrl} alt={message.name} data-ai-hint={avatarData?.imageHint} />
-                <AvatarFallback>{message.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={avatarData?.imageUrl} alt={message.sender} data-ai-hint={avatarData?.imageHint} />
+                <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
               </Avatar>
               <div
                 className={cn(
@@ -78,7 +78,7 @@ export function ChatWindow({ chat }: ChatWindowProps) {
                     : 'bg-muted'
                 )}
               >
-                <p>{message.message}</p>
+                <p>{message.content}</p>
               </div>
             </div>
           )

@@ -47,6 +47,7 @@ export function ChatList({
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-2 p-4 pt-0">
           {chats.map((chat) => {
+            if (!chat.contact) return null;
             const avatar = PlaceHolderImages.find(p => p.id === chat.contact.avatar);
             return (
               <Button
@@ -76,7 +77,7 @@ export function ChatList({
                 >
                   <p className="font-semibold">{chat.contact.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {chat.messages.slice(-1)[0].message}
+                    {chat.messages.slice(-1)[0].content}
                   </p>
                 </div>
               </Button>

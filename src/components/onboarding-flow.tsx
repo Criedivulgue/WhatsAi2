@@ -29,16 +29,21 @@ import { useRouter } from 'next/navigation';
 import Logo from './logo';
 import { Switch } from './ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { createBrandAndUser } from '@/firebase/firestore/mutations';
+import { useAuth } from '@/firebase';
+import { Loader2 } from 'lucide-react';
 
 const brandSchema = z.object({
   brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
   brandTone: z.string().min(10, 'Por favor, descreva o tom da sua marca.'),
-  brandRules: z.string().optional(),
+  hardRules: z.string().optional(),
+  softRules: z.string().optional(),
 });
 
 const detailsSchema = z.object({
   attendantName: z.string().min(2, 'Seu nome é obrigatório.'),
   attendantEmail: z.string().email('Endereço de e-mail inválido.'),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
 });
 
 const aiConfigSchema = z.object({
@@ -47,26 +52,45 @@ const aiConfigSchema = z.object({
   autoFollowUp: z.boolean().default(false),
 });
 
-const formSchemas = [brandSchema, detailsSchema, aiConfigSchema];
+const formSchema = brandSchema.merge(detailsSchema).merge(aiConfigSchema);
 
-type OnboardingFormValues = z.infer<typeof brandSchema> &
-  z.infer<typeof detailsSchema> &
-  z.infer<typeof aiConfigSchema>;
+type OnboardingFormValues = z.infer<typeof formSchema>;
+
+const formSteps = [
+  {
+    title: 'Informações da Marca',
+    fields: ['brandName', 'brandTone', 'hardRules', 'softRules'],
+    schema: brandSchema,
+  },
+  {
+    title: 'Seus Detalhes',
+    fields: ['attendantName', 'attendantEmail', 'password'],
+    schema: detailsSchema,
+  },
+  {
+    title: 'Configuração da IA',
+    fields: ['autoSummarize', 'autoEnrich', 'autoFollowUp'],
+    schema: aiConfigSchema,
+  },
+];
 
 export default function OnboardingFlow() {
   const [step, setStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
-  const currentSchema = formSchemas[step];
   const form = useForm<OnboardingFormValues>({
-    resolver: zodResolver(currentSchema),
+    resolver: zodResolver(formSteps[step].schema),
     defaultValues: {
       brandName: '',
-      brandTone: '',
-      brandRules: '',
+      brandTone: 'Amigável e profissional, com uma abordagem prestativa.',
+      hardRules: 'Nunca prometer funcionalidades que não existem; Não usar gírias.',
+      softRules: 'Usar emojis com moderação; Sempre saudar o cliente pelo nome.',
       attendantName: '',
       attendantEmail: '',
+      password: '',
       autoSummarize: true,
       autoEnrich: false,
       autoFollowUp: false,
@@ -77,9 +101,10 @@ export default function OnboardingFlow() {
   const { trigger, handleSubmit } = form;
 
   const nextStep = async () => {
-    const isValid = await trigger();
+    const fieldsToValidate = formSteps[step].fields as (keyof OnboardingFormValues)[];
+    const isValid = await trigger(fieldsToValidate);
     if (isValid) {
-      if (step < formSchemas.length - 1) {
+      if (step < formSteps.length - 1) {
         setStep(step + 1);
       }
     }
@@ -91,17 +116,28 @@ export default function OnboardingFlow() {
     }
   };
 
-  const onSubmit = (data: OnboardingFormValues) => {
-    console.log('Dados de integração:', data);
-    // Here you would normally save the data to your backend
-    toast({
-      title: 'Configuração concluída!',
-      description: 'Seu espaço de trabalho foi criado com sucesso.',
-    });
-    router.push('/dashboard');
+  const onSubmit = async (data: OnboardingFormValues) => {
+    setIsLoading(true);
+    try {
+      await createBrandAndUser(auth, data);
+      toast({
+        title: 'Configuração concluída!',
+        description: 'Seu espaço de trabalho foi criado com sucesso.',
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Falha no onboarding:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro na configuração',
+        description: error.message || 'Não foi possível criar sua conta. Tente novamente.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const progressValue = ((step + 1) / formSchemas.length) * 100;
+  const progressValue = ((step + 1) / formSteps.length) * 100;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -120,10 +156,10 @@ export default function OnboardingFlow() {
               </div>
               <Progress value={progressValue} className="w-full" />
             </CardHeader>
-            <CardContent className="min-h-[320px]">
+            <CardContent className="min-h-[380px]">
               {step === 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold font-headline">Informações da Marca</h3>
+                  <h3 className="text-lg font-semibold font-headline">{formSteps[0].title}</h3>
                   <FormField
                     control={form.control}
                     name="brandName"
@@ -144,21 +180,36 @@ export default function OnboardingFlow() {
                       <FormItem>
                         <FormLabel>Tom e Voz da Marca</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="ex: Amigável e profissional, use emojis com moderação..." {...field} />
+                          <Textarea placeholder="ex: Amigável e profissional..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
+                   <FormField
                     control={form.control}
-                    name="brandRules"
+                    name="hardRules"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Regras Específicas (Opcional)</FormLabel>
+                        <FormLabel>Regras Rígidas (Opcional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="ex: Nunca oferecer descontos, sempre cumprimentar pelo nome..." {...field} />
+                          <Textarea placeholder="ex: Nunca oferecer descontos..." {...field} />
                         </FormControl>
+                        <FormDescription>Proibições que a IA não pode violar.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="softRules"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Regras Flexíveis (Opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="ex: Usar emojis com moderação..." {...field} />
+                        </FormControl>
+                        <FormDescription>Diretrizes de estilo que moldam a personalidade da IA.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -167,7 +218,7 @@ export default function OnboardingFlow() {
               )}
               {step === 1 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold font-headline">Seus Detalhes</h3>
+                  <h3 className="text-lg font-semibold font-headline">{formSteps[1].title}</h3>
                   <FormField
                     control={form.control}
                     name="attendantName"
@@ -175,7 +226,7 @@ export default function OnboardingFlow() {
                       <FormItem>
                         <FormLabel>Seu Nome</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} />
+                          <Input placeholder="Seu nome completo" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -186,9 +237,22 @@ export default function OnboardingFlow() {
                     name="attendantEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seu Email</FormLabel>
+                        <FormLabel>Seu Email de Acesso</FormLabel>
                         <FormControl>
                           <Input type="email" placeholder="voce@empresa.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sua Senha</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -198,7 +262,7 @@ export default function OnboardingFlow() {
               )}
               {step === 2 && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold font-headline">Configuração da IA</h3>
+                  <h3 className="text-lg font-semibold font-headline">{formSteps[2].title}</h3>
                   <FormField
                     control={form.control}
                     name="autoSummarize"
@@ -206,7 +270,7 @@ export default function OnboardingFlow() {
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                           <FormLabel>Resumir Chats Automaticamente</FormLabel>
-                          <FormDescription>Gerar automaticamente um resumo quando um chat termina.</FormDescription>
+                          <FormDescription>Gerar um resumo quando um chat termina.</FormDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -224,7 +288,7 @@ export default function OnboardingFlow() {
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                           <FormLabel>Sugerir Enriquecimento de Perfil</FormLabel>
-                          <FormDescription>Deixe a IA sugerir novos interesses e categorias para contatos.</FormDescription>
+                          <FormDescription>Deixe a IA sugerir interesses e categorias.</FormDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -242,7 +306,7 @@ export default function OnboardingFlow() {
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
                           <FormLabel>Gerar Ideias de Acompanhamento</FormLabel>
-                          <FormDescription>A IA irá redigir e-mails e mensagens de acompanhamento para você.</FormDescription>
+                          <FormDescription>A IA irá redigir e-mails e mensagens.</FormDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -262,12 +326,15 @@ export default function OnboardingFlow() {
                   Voltar
                 </Button>
               ) : <div></div>}
-              {step < formSchemas.length - 1 ? (
+              {step < formSteps.length - 1 ? (
                 <Button onClick={nextStep} type="button">
                   Próximo
                 </Button>
               ) : (
-                <Button type="submit">Finalizar Configuração</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Finalizar Configuração
+                </Button>
               )}
             </CardFooter>
           </Card>

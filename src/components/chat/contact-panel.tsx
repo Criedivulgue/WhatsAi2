@@ -63,6 +63,13 @@ interface ContactPanelProps {
 
 export function ContactPanel({ chat }: ContactPanelProps) {
   const { contact } = chat;
+  if (!contact) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+        <p className="text-muted-foreground">Selecione um chat para ver os detalhes do contato.</p>
+      </div>
+    );
+  }
   const avatar = PlaceHolderImages.find((p) => p.id === contact.avatar);
 
   return (
@@ -89,8 +96,8 @@ export function ContactPanel({ chat }: ContactPanelProps) {
             <CardContent>
               <div className="space-y-2">
                 <div>
-                  <h4 className="font-semibold text-sm">Status</h4>
-                  <Badge>{contact.status}</Badge>
+                  <h4 className="font-semibold text-sm">Tipo de Contato</h4>
+                  <Badge>{contact.contactType}</Badge>
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm">Categorias</h4>
@@ -193,7 +200,7 @@ function AiTools({ chat }: { chat: Chat }) {
 
           <TabsContent value="summary" className="mt-4 space-y-4">
             <Button
-              onClick={() => handleAction(() => getChatSummaryAction(chat.messages.map(m => `${m.name}: ${m.message}`).join('\n')), 'summary')}
+              onClick={() => handleAction(() => getChatSummaryAction(chat.messages.map(m => `${m.sender}: ${m.content}`).join('\n')), 'summary')}
               disabled={isLoading.summary}
               className="w-full"
             >

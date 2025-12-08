@@ -17,7 +17,10 @@ export async function getChatSummaryAction(conversationText: string) {
 }
 
 export async function getProfileEnrichmentsAction(chat: Chat) {
-    const chatContent = chat.messages.map(m => `${m.name}: ${m.message}`).join('\n');
+    if (!chat.contact) {
+        throw new Error("Dados do contato não encontrados no chat.");
+    }
+    const chatContent = chat.messages.map(m => `${m.sender}: ${m.content}`).join('\n');
     return await suggestProfileEnrichments({
         chatContent,
         currentInterests: chat.contact.interests,
@@ -27,7 +30,10 @@ export async function getProfileEnrichmentsAction(chat: Chat) {
 }
 
 export async function getFollowUpSuggestionsAction(chat: Chat, brandInformation: string) {
-    const conversationSummary = chat.messages.slice(-5).map(m => `${m.name}: ${m.message}`).join('\n');
+    if (!chat.contact) {
+        throw new Error("Dados do contato não encontrados no chat.");
+    }
+    const conversationSummary = chat.messages.slice(-5).map(m => `${m.sender}: ${m.content}`).join('\n');
     return await generateFollowUpSuggestions({
         contactName: chat.contact.name,
         conversationSummary,

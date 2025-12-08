@@ -126,27 +126,27 @@ export default function SettingsPage() {
     }
   }, [brandData, userData, brandForm, attendantForm, aiForm]);
 
-  const onBrandSubmit = (data: BrandSettingsFormValues) => {
+  const onBrandSubmit = async (data: BrandSettingsFormValues) => {
     if (!brandData) return;
-    updateBrandData(firestore, brandData.id, data);
+    await updateBrandData(firestore, brandData.id, data);
     toast({
       title: 'Sucesso!',
       description: 'As informações da sua marca foram atualizadas.',
     });
   };
 
-  const onAttendantSubmit = (data: AttendantSettingsFormValues) => {
+  const onAttendantSubmit = async (data: AttendantSettingsFormValues) => {
     if (!user) return;
-    updateUserProfile(firestore, user.uid, data);
+    await updateUserProfile(firestore, user.uid, data);
     toast({
       title: 'Sucesso!',
       description: 'Sua persona de atendente foi atualizada.',
     });
   };
 
-  const onAiSubmit = (data: AiSettingsFormValues) => {
+  const onAiSubmit = async (data: AiSettingsFormValues) => {
     if (!brandData) return;
-    updateBrandData(firestore, brandData.id, { aiConfig: data });
+    await updateBrandData(firestore, brandData.id, { aiConfig: data });
     toast({
       title: 'Sucesso!',
       description: 'As configurações de IA foram atualizadas.',
@@ -161,7 +161,7 @@ export default function SettingsPage() {
     try {
       const downloadURL = await uploadAvatar(storage, user.uid, file);
       attendantForm.setValue('avatarUrl', downloadURL, { shouldValidate: true });
-      await onAttendantSubmit({ avatarUrl: downloadURL });
+      await onAttendantSubmit({ avatarUrl: downloadURL }); // Await the submission
       toast({
         title: 'Avatar atualizado!',
         description: 'Sua nova foto de perfil foi salva.',

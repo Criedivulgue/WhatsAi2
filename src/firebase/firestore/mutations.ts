@@ -95,20 +95,25 @@ export async function createBrandAndUser(
  * @param brandId The ID of the brand to update.
  * @param data The data to update.
  */
-export function updateBrandData(
+export async function updateBrandData(
   firestore: Firestore,
   brandId: string,
   data: Partial<Brand>
 ) {
   const brandRef = doc(firestore, 'brands', brandId);
-  updateDoc(brandRef, data).catch(async (serverError) => {
+  try {
+    await updateDoc(brandRef, data);
+  }
+  catch (serverError) {
       const permissionError = new FirestorePermissionError({
         path: brandRef.path,
         operation: 'update',
         requestResourceData: data,
       });
       errorEmitter.emit('permission-error', permissionError);
-    });
+      // Re-throw the original error to be caught by the caller if needed
+      throw serverError;
+  }
 }
 
 /**
@@ -117,18 +122,22 @@ export function updateBrandData(
  * @param userId The ID of the user to update.
  * @param data The data to update.
  */
-export function updateUserProfile(
+export async function updateUserProfile(
   firestore: Firestore,
   userId: string,
   data: Partial<User>
 ) {
   const userRef = doc(firestore, 'users', userId);
-  updateDoc(userRef, data).catch(async (serverError) => {
+  try {
+    await updateDoc(userRef, data);
+  } catch (serverError) {
     const permissionError = new FirestorePermissionError({
       path: userRef.path,
       operation: 'update',
       requestResourceData: data,
     });
     errorEmitter.emit('permission-error', permissionError);
-  });
+    // Re-throw the original error to be caught by the caller if needed
+    throw serverError;
+  }
 }

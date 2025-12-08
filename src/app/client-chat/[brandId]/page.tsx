@@ -49,6 +49,7 @@ export default function ClientChatPage() {
 
   const brandRef = useMemo(() => {
     if (!brandId) return null;
+    // The brand document ID is the same as the owner's UID (attendant)
     return doc(firestore, 'brands', brandId);
   }, [brandId, firestore]);
   const { data: brandData, loading: brandLoading } = useDoc<Brand>(brandRef);
@@ -62,11 +63,19 @@ export default function ClientChatPage() {
   }, [chatId, firestore]);
 
   const { data: messages } = useCollection<Message>(messagesQuery);
-  const userAvatar = PlaceHolderImages[0];
+  
+  // Use a stable avatar placeholder
+  const attendantAvatar = useMemo(() => {
+    // Using a simple hash function to pick a stable avatar based on attendant's name
+    if (!attendantData?.name) return PlaceHolderImages[0];
+    const hash = attendantData.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+    return PlaceHolderImages[hash % PlaceHolderImages.length];
+  }, [attendantData?.name]);
+
 
   const handleStartChat = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber.trim() || !brandId || !brandData) return;
+    if (!phoneNumber.trim() || !brandId || !brandData || !attendantData) return;
 
     setIsStartingChat(true);
     try {
@@ -124,7 +133,7 @@ export default function ClientChatPage() {
         await setDoc(newChatRef, {
           contactId: contact.id,
           brandId: brandId,
-          attendantId: brandId, // Assign the brand owner as the attendant
+          attendantId: attendantData.id,
           status: 'Active',
           lastMessageTimestamp: serverTimestamp(),
           lastMessageContent: initialGreeting.greeting,
@@ -182,19 +191,23 @@ export default function ClientChatPage() {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
+  
+  const pageLoading = brandLoading || attendantLoading;
 
   if (!chatStarted) {
-    const pageLoading = brandLoading || attendantLoading || !brandData || !attendantData;
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
         {pageLoading ? (
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="text-muted-foreground">Carregando informações...</p>
+            </div>
         ) : (
         <Card className="w-full max-w-md shadow-lg overflow-hidden">
           <CardHeader className="bg-card p-6 flex flex-col items-center text-center">
             <Avatar className='h-24 w-24 mb-4 border-4 border-white shadow-md'>
-                <AvatarImage src={userAvatar.imageUrl} alt={attendantData?.name} data-ai-hint={userAvatar.imageHint} />
-                <AvatarFallback className="text-3xl">{attendantData?.name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={attendantAvatar.imageUrl} alt={attendantData?.name} data-ai-hint={attendantAvatar.imageHint} />
+                <AvatarFallback className="text-3xl">{attendantData?.name?.charAt(0) || 'A'}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-2xl">{brandData?.brandName}</CardTitle>
             <CardDescription className="text-base">{attendantData?.name}</CardDescription>
@@ -226,7 +239,7 @@ export default function ClientChatPage() {
     <div className="flex h-screen flex-col bg-background">
       <header className="flex items-center gap-4 border-b bg-card p-4">
         <Avatar>
-          <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint} />
+          <AvatarImage src={attendantAvatar.imageUrl} data-ai-hint={attendantAvatar.imageHint} />
           <AvatarFallback>
             <Bot />
           </AvatarFallback>
@@ -248,7 +261,7 @@ export default function ClientChatPage() {
           >
             {(message.sender === 'attendant' || message.sender === 'ai') && (
               <Avatar className="h-8 w-8">
-                 <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint} />
+                 <AvatarImage src={attendantAvatar.imageUrl} data-ai-hint={attendantAvatar.imageHint} />
                 <AvatarFallback>
                   <Bot size={20} />
                 </AvatarFallback>

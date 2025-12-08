@@ -28,7 +28,9 @@ export async function createBrandAndUser(
     brandTone,
     hardRules,
     softRules,
-    ...aiConfig
+    autoSummarize,
+    autoEnrich,
+    autoFollowUp
   } = data;
 
   if (!password) {
@@ -57,7 +59,11 @@ export async function createBrandAndUser(
     hardRules: hardRules || '',
     softRules: softRules || '',
     ownerId: user.uid,
-    aiConfig,
+    aiConfig: {
+      autoSummarize,
+      autoEnrich,
+      autoFollowUp,
+    }
   });
 
   // Create a document for the user's profile

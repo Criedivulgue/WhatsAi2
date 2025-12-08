@@ -50,7 +50,6 @@ const brandSettingsSchema = z.object({
 
 const attendantSettingsSchema = z.object({
   attendantPersona: z.string().optional(),
-  avatarUrl: z.string().url('Por favor, insira uma URL de imagem válida.').optional().or(z.literal('')),
 });
 
 const aiSettingsSchema = z.object({
@@ -96,9 +95,6 @@ export default function SettingsPage() {
     mode: 'onChange',
   });
 
-  // Watch for changes in the avatar URL field to update the preview
-  const avatarUrl = attendantForm.watch('avatarUrl');
-
   useEffect(() => {
     if (brandData) {
       brandForm.reset({
@@ -121,7 +117,6 @@ export default function SettingsPage() {
     if (userData) {
       attendantForm.reset({
         attendantPersona: userData.attendantPersona,
-        avatarUrl: userData.avatarUrl,
       });
     }
   }, [brandData, userData, brandForm, attendantForm, aiForm]);
@@ -160,8 +155,8 @@ export default function SettingsPage() {
     setIsUploading(true);
     try {
       const downloadURL = await uploadAvatar(storage, user.uid, file);
-      attendantForm.setValue('avatarUrl', downloadURL, { shouldValidate: true });
-      await onAttendantSubmit({ avatarUrl: downloadURL }); // Await the submission
+      // Directly update the user profile in Firestore
+      await updateUserProfile(firestore, user.uid, { avatarUrl: downloadURL });
       toast({
         title: 'Avatar atualizado!',
         description: 'Sua nova foto de perfil foi salva.',
@@ -322,7 +317,7 @@ export default function SettingsPage() {
                       <FormLabel>Sua Foto de Perfil</FormLabel>
                       <div className="flex items-center gap-4">
                         <Avatar className="h-20 w-20">
-                          <AvatarImage src={avatarUrl} alt="Avatar Preview" />
+                          <AvatarImage src={userData?.avatarUrl} alt="Avatar Preview" />
                           <AvatarFallback>{userData?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <Button

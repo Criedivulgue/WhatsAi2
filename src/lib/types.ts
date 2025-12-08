@@ -5,12 +5,14 @@ export type User = {
   name: string;
   email: string;
   brandId: string;
+  avatarUrl?: string;
   attendantPersona?: string;
 }
 
 export type Brand = {
   id: string;
   brandName: string;
+  slogan?: string;
   brandTone: string;
   knowledgeBase?: string;
   hardRules?: string;

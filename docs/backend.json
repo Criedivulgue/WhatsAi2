@@ -9,6 +9,10 @@
           "type": "string",
           "description": "The name of the brand."
         },
+        "slogan": {
+          "type": "string",
+          "description": "The brand's slogan or tagline."
+        },
         "brandTone": {
           "type": "string",
           "description": "The brand's tone of voice."
@@ -49,6 +53,11 @@
         "brandId": {
           "type": "string",
           "description": "The brand this attendant belongs to."
+        },
+        "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for the attendant's avatar image."
         },
         "attendantPersona": {
           "type": "string",

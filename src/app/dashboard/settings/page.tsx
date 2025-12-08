@@ -2,10 +2,11 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,13 +28,19 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useDoc, useFirestore, useUser } from '@/firebase';
-import { updateBrandData, updateUserProfile } from '@/firebase/firestore/mutations';
+import {
+  updateBrandData,
+  updateUserProfile,
+} from '@/firebase/firestore/mutations';
 import { useToast } from '@/hooks/use-toast';
 import type { Brand, User } from '@/lib/types';
 import { doc } from 'firebase/firestore';
 
 const brandSettingsSchema = z.object({
-  brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
+  brandName: z
+    .string()
+    .min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
+  slogan: z.string().optional(),
   brandTone: z.string().min(10, 'Por favor, descreva o tom da sua marca.'),
   hardRules: z.string().optional(),
   softRules: z.string().optional(),
@@ -41,7 +48,8 @@ const brandSettingsSchema = z.object({
 });
 
 const attendantSettingsSchema = z.object({
-    attendantPersona: z.string().optional(),
+  attendantPersona: z.string().optional(),
+  avatarUrl: z.string().url('Por favor, insira uma URL de imagem válida.').optional().or(z.literal('')),
 });
 
 const aiSettingsSchema = z.object({
@@ -49,7 +57,6 @@ const aiSettingsSchema = z.object({
   autoEnrich: z.boolean().default(false),
   autoFollowUp: z.boolean().default(false),
 });
-
 
 type BrandSettingsFormValues = z.infer<typeof brandSettingsSchema>;
 type AttendantSettingsFormValues = z.infer<typeof attendantSettingsSchema>;
@@ -66,7 +73,8 @@ export default function SettingsPage() {
   const brandDocRef = userData?.brandId
     ? doc(firestore, 'brands', userData.brandId)
     : null;
-  const { data: brandData, loading: brandDataLoading } = useDoc<Brand>(brandDocRef);
+  const { data: brandData, loading: brandDataLoading } =
+    useDoc<Brand>(brandDocRef);
 
   const brandForm = useForm<BrandSettingsFormValues>({
     resolver: zodResolver(brandSettingsSchema),
@@ -74,8 +82,8 @@ export default function SettingsPage() {
   });
 
   const attendantForm = useForm<AttendantSettingsFormValues>({
-      resolver: zodResolver(attendantSettingsSchema),
-      mode: 'onChange',
+    resolver: zodResolver(attendantSettingsSchema),
+    mode: 'onChange',
   });
 
   const aiForm = useForm<AiSettingsFormValues>({
@@ -83,24 +91,32 @@ export default function SettingsPage() {
     mode: 'onChange',
   });
 
+  // Watch for changes in the avatar URL field to update the preview
+  const avatarUrl = attendantForm.watch('avatarUrl');
+
   useEffect(() => {
     if (brandData) {
       brandForm.reset({
         brandName: brandData.brandName,
+        slogan: brandData.slogan,
         brandTone: brandData.brandTone,
         hardRules: brandData.hardRules,
         softRules: brandData.softRules,
         knowledgeBase: brandData.knowledgeBase,
       });
-      aiForm.reset({
-        autoSummarize: brandData.aiConfig.autoSummarize,
-        autoEnrich: brandData.aiConfig.autoEnrich,
-        autoFollowUp: brandData.aiConfig.autoFollowUp,
-      });
+      // Ensure aiConfig exists before trying to access its properties
+      if (brandData.aiConfig) {
+        aiForm.reset({
+          autoSummarize: brandData.aiConfig.autoSummarize,
+          autoEnrich: brandData.aiConfig.autoEnrich,
+          autoFollowUp: brandData.aiConfig.autoFollowUp,
+        });
+      }
     }
-     if (userData) {
+    if (userData) {
       attendantForm.reset({
         attendantPersona: userData.attendantPersona,
+        avatarUrl: userData.avatarUrl,
       });
     }
   }, [brandData, userData, brandForm, attendantForm, aiForm]);
@@ -115,12 +131,12 @@ export default function SettingsPage() {
   };
 
   const onAttendantSubmit = (data: AttendantSettingsFormValues) => {
-      if (!user) return;
-      updateUserProfile(firestore, user.uid, data);
-      toast({
-          title: "Sucesso!",
-          description: "Sua persona de atendente foi atualizada.",
-      });
+    if (!user) return;
+    updateUserProfile(firestore, user.uid, data);
+    toast({
+      title: 'Sucesso!',
+      description: 'Sua persona de atendente foi atualizada.',
+    });
   };
 
   const onAiSubmit = (data: AiSettingsFormValues) => {
@@ -155,7 +171,10 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <Form {...brandForm}>
-              <form onSubmit={brandForm.handleSubmit(onBrandSubmit)} className="space-y-4">
+              <form
+                onSubmit={brandForm.handleSubmit(onBrandSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={brandForm.control}
                   name="brandName"
@@ -164,6 +183,19 @@ export default function SettingsPage() {
                       <FormLabel>Nome da Marca</FormLabel>
                       <FormControl>
                         <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={brandForm.control}
+                  name="slogan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Slogan da Marca (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Sua frase de efeito aqui" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,16 +214,18 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={brandForm.control}
                   name="knowledgeBase"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Base de Conhecimento</FormLabel>
                       <FormControl>
-                        <Textarea {...field} className="min-h-[150px]"/>
+                        <Textarea {...field} className="min-h-[150px]" />
                       </FormControl>
-                      <FormDescription>Insira fatos sobre sua empresa para a IA usar.</FormDescription>
+                      <FormDescription>
+                        Insira fatos sobre sua empresa para a IA usar.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -219,126 +253,184 @@ export default function SettingsPage() {
                       <FormControl>
                         <Textarea {...field} />
                       </FormControl>
-                       <FormDescription>Diretrizes de estilo para a IA.</FormDescription>
+                      <FormDescription>
+                        Diretrizes de estilo para a IA.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={brandForm.formState.isSubmitting}>
-                  {brandForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button
+                  type="submit"
+                  disabled={brandForm.formState.isSubmitting}
+                >
+                  {brandForm.formState.isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Salvar Alterações da Marca
                 </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
-        
-        <div className="flex flex-col gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Personalização do Atendente</CardTitle>
-                    <CardDescription>
-                    Defina sua persona de comunicação para a IA.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Form {...attendantForm}>
-                    <form onSubmit={attendantForm.handleSubmit(onAttendantSubmit)} className="space-y-4">
-                        <FormField
-                        control={attendantForm.control}
-                        name="attendantPersona"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Sua Persona (Opcional)</FormLabel>
-                            <FormControl>
-                                <Textarea {...field} placeholder="Ex: Sou direto e uso um linguajar técnico."/>
-                            </FormControl>
-                            <FormDescription>Descreva seu estilo pessoal de comunicação.</FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <Button type="submit" disabled={attendantForm.formState.isSubmitting}>
-                        {attendantForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Salvar Persona
-                        </Button>
-                    </form>
-                    </Form>
-                </CardContent>
-            </Card>
 
-            <Card>
+        <div className="flex flex-col gap-6">
+          <Card>
             <CardHeader>
-                <CardTitle>Configuração da IA</CardTitle>
-                <CardDescription>
-                Gerencie as automações do seu assistente de IA.
-                </CardDescription>
+              <CardTitle>Personalização do Atendente</CardTitle>
+              <CardDescription>
+                Defina sua foto de perfil e persona de comunicação para a IA.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-                <Form {...aiForm}>
-                <form onSubmit={aiForm.handleSubmit(onAiSubmit)} className="space-y-6">
-                    <FormField
-                        control={aiForm.control}
-                        name="autoSummarize"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                            <FormLabel>Resumir Chats Automaticamente</FormLabel>
-                            <FormDescription>Gerar um resumo quando um chat termina.</FormDescription>
-                            </div>
-                            <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                            </FormControl>
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={aiForm.control}
-                        name="autoEnrich"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                            <FormLabel>Sugerir Enriquecimento de Perfil</FormLabel>
-                            <FormDescription>Deixe a IA sugerir interesses e categorias.</FormDescription>
-                            </div>
-                            <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                            </FormControl>
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={aiForm.control}
-                        name="autoFollowUp"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                            <FormLabel>Gerar Ideias de Acompanhamento</FormLabel>
-                            <FormDescription>A IA irá redigir e-mails e mensagens.</FormDescription>
-                            </div>
-                            <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                            </FormControl>
-                        </FormItem>
-                        )}
-                    />
-                    <Button type="submit" disabled={aiForm.formState.isSubmitting}>
-                    {aiForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar Automações
-                    </Button>
+              <Form {...attendantForm}>
+                <form
+                  onSubmit={attendantForm.handleSubmit(onAttendantSubmit)}
+                  className="space-y-4"
+                >
+                   <FormField
+                    control={attendantForm.control}
+                    name="avatarUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL do Avatar</FormLabel>
+                        <div className="flex items-center gap-4">
+                           <Avatar className="h-16 w-16">
+                            <AvatarImage src={avatarUrl} alt="Avatar Preview" />
+                            <AvatarFallback>{userData?.name?.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <FormControl>
+                            <Input placeholder="https://exemplo.com/sua-foto.jpg" {...field} />
+                          </FormControl>
+                        </div>
+                        <FormDescription>Cole a URL para sua foto de perfil.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={attendantForm.control}
+                    name="attendantPersona"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sua Persona (Opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            placeholder="Ex: Sou direto e uso um linguajar técnico."
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Descreva seu estilo pessoal de comunicação.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={attendantForm.formState.isSubmitting}
+                  >
+                    {attendantForm.formState.isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Salvar Perfil
+                  </Button>
                 </form>
-                </Form>
+              </Form>
             </CardContent>
-            </Card>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuração da IA</CardTitle>
+              <CardDescription>
+                Gerencie as automações do seu assistente de IA.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...aiForm}>
+                <form
+                  onSubmit={aiForm.handleSubmit(onAiSubmit)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={aiForm.control}
+                    name="autoSummarize"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>Resumir Chats Automaticamente</FormLabel>
+                          <FormDescription>
+                            Gerar um resumo quando um chat termina.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={aiForm.control}
+                    name="autoEnrich"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>
+                            Sugerir Enriquecimento de Perfil
+                          </FormLabel>
+                          <FormDescription>
+                            Deixe a IA sugerir interesses e categorias.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={aiForm.control}
+                    name="autoFollowUp"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>
+                            Gerar Ideias de Acompanhamento
+                          </FormLabel>
+                          <FormDescription>
+                            A IA irá redigir e-mails e mensagens.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={aiForm.formState.isSubmitting}
+                  >
+                    {aiForm.formState.isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Salvar Automações
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

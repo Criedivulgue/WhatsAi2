@@ -3,9 +3,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Chat, Message } from '@/lib/types';
+import type { Chat, Message, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   addDoc,
@@ -29,6 +29,12 @@ export function ChatWindow({ chat }: ChatWindowProps) {
   const firestore = useFirestore();
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const userDocRef = useMemo(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: userData } = useDoc<User>(userDocRef);
 
   const messagesQuery = useMemo(() => {
     if (!chat) return null;
@@ -79,12 +85,9 @@ export function ChatWindow({ chat }: ChatWindowProps) {
       <div ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {loading && <p>Carregando mensagens...</p>}
         {messages.map((message) => {
-          const avatarData =
-            message.sender === 'attendant'
-              ? PlaceHolderImages[0] // Assuming attendant has a default avatar
-              : PlaceHolderImages.find((p) => p.id === chat.contact?.avatar);
-
+          const contactAvatar = PlaceHolderImages.find((p) => p.id === chat.contact?.avatar);
           const isUser = message.sender === 'attendant';
+
           return (
             <div
               key={message.id}
@@ -95,9 +98,8 @@ export function ChatWindow({ chat }: ChatWindowProps) {
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  src={avatarData?.imageUrl}
+                  src={isUser ? userData?.avatarUrl : contactAvatar?.imageUrl}
                   alt={message.sender}
-                  data-ai-hint={avatarData?.imageHint}
                 />
                 <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
               </Avatar>

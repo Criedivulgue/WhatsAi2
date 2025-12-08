@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useCollection, useDoc, useFirestore } from '@/firebase';
 import type { Message, Brand, User } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import {
   addDoc,
@@ -39,7 +38,7 @@ export default function ClientChatPage() {
   const params = useParams();
   const brandId = params.brandId as string;
 
-  // Since brandId is the attendant's UID, we can fetch attendant data
+  // Attendant is the user who owns the brand
   const attendantUserRef = useMemo(() => {
     if (!brandId) return null;
     return doc(firestore, 'users', brandId);
@@ -64,15 +63,6 @@ export default function ClientChatPage() {
 
   const { data: messages } = useCollection<Message>(messagesQuery);
   
-  // Use a stable avatar placeholder
-  const attendantAvatar = useMemo(() => {
-    // Using a simple hash function to pick a stable avatar based on attendant's name
-    if (!attendantData?.name) return PlaceHolderImages[0];
-    const hash = attendantData.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-    return PlaceHolderImages[hash % PlaceHolderImages.length];
-  }, [attendantData?.name]);
-
-
   const handleStartChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber.trim() || !brandId || !brandData || !attendantData) return;
@@ -133,7 +123,7 @@ export default function ClientChatPage() {
         await setDoc(newChatRef, {
           contactId: contact.id,
           brandId: brandId,
-          attendantId: attendantData.id,
+          attendantId: brandId, // The attendant is the brand owner
           status: 'Active',
           lastMessageTimestamp: serverTimestamp(),
           lastMessageContent: initialGreeting.greeting,
@@ -206,12 +196,12 @@ export default function ClientChatPage() {
         <Card className="w-full max-w-md shadow-lg overflow-hidden">
           <CardHeader className="bg-card p-6 flex flex-col items-center text-center">
             <Avatar className='h-24 w-24 mb-4 border-4 border-white shadow-md'>
-                <AvatarImage src={attendantAvatar.imageUrl} alt={attendantData?.name} data-ai-hint={attendantAvatar.imageHint} />
+                <AvatarImage src={attendantData?.avatarUrl} alt={attendantData?.name} />
                 <AvatarFallback className="text-3xl">{attendantData?.name?.charAt(0) || 'A'}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-2xl">{brandData?.brandName}</CardTitle>
             <CardDescription className="text-base">{attendantData?.name}</CardDescription>
-            <p className="text-sm text-muted-foreground mt-2 px-4">{brandData?.brandTone}</p>
+            <p className="text-sm text-muted-foreground mt-2 px-4">{brandData?.slogan || brandData?.brandTone}</p>
           </CardHeader>
           <CardContent className='p-6 bg-white'>
             <form onSubmit={handleStartChat} className="space-y-4">
@@ -239,7 +229,7 @@ export default function ClientChatPage() {
     <div className="flex h-screen flex-col bg-background">
       <header className="flex items-center gap-4 border-b bg-card p-4">
         <Avatar>
-          <AvatarImage src={attendantAvatar.imageUrl} data-ai-hint={attendantAvatar.imageHint} />
+          <AvatarImage src={attendantData?.avatarUrl} />
           <AvatarFallback>
             <Bot />
           </AvatarFallback>
@@ -261,7 +251,7 @@ export default function ClientChatPage() {
           >
             {(message.sender === 'attendant' || message.sender === 'ai') && (
               <Avatar className="h-8 w-8">
-                 <AvatarImage src={attendantAvatar.imageUrl} data-ai-hint={attendantAvatar.imageHint} />
+                 <AvatarImage src={attendantData?.avatarUrl} />
                 <AvatarFallback>
                   <Bot size={20} />
                 </AvatarFallback>

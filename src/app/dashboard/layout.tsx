@@ -25,10 +25,11 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useDoc, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import type { User } from '@/lib/types';
+import { doc } from 'firebase/firestore';
 
 const navItems = [
   { href: '/dashboard', icon: MessageSquare, label: 'Chat' },
@@ -44,9 +45,15 @@ export default function DashboardLayout({
   const params = useParams();
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
-  const userAvatar = PlaceHolderImages[0];
   const user = auth.currentUser;
+
+  const userDocRef = useMemo(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: userData } = useDoc<User>(userDocRef);
   
   const brandIdFromUrl = params.brandId;
 
@@ -207,8 +214,8 @@ export default function DashboardLayout({
             </Button>
           </div>
            <Avatar>
-            <AvatarImage src={userAvatar.imageUrl} alt="User avatar" data-ai-hint={userAvatar.imageHint} />
-            <AvatarFallback>UA</AvatarFallback>
+            <AvatarImage src={userData?.avatarUrl} alt="User avatar" />
+            <AvatarFallback>{userData?.name?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
         </header>
         <main className="flex-1">{children}</main>

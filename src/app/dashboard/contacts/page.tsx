@@ -30,21 +30,30 @@ export default function ContactsPage() {
     return doc(firestore, 'users', user.uid);
   }, [user, firestore]);
   const { data: userData, loading: userDataLoading } = useDoc<User>(userDocRef);
+  const brandId = userData?.brandId;
 
   // Query for contacts belonging to the user's brand
   const contactsQuery = useMemo(() => {
-    if (!userData?.brandId) return null;
+    if (!brandId) return null;
     return query(
       collection(firestore, 'contacts'),
-      where('brandId', '==', userData.brandId)
+      where('brandId', '==', brandId)
     );
-  }, [userData?.brandId, firestore]);
+  }, [brandId, firestore]);
 
   const { data: contactsData, loading: contactsLoading } =
     useCollection<Contact>(contactsQuery);
-  
+
   const isLoading = userLoading || userDataLoading;
-  const isButtonDisabled = isLoading || !userData?.brandId;
+  const isButtonDisabled = isLoading || !brandId;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -54,7 +63,7 @@ export default function ContactsPage() {
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button disabled={isButtonDisabled}>
-                {isLoading ? (
+                {isButtonDisabled ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -68,7 +77,7 @@ export default function ContactsPage() {
               </SheetHeader>
               <ScrollArea className="flex-grow">
                 <ContactForm
-                  brandId={userData?.brandId}
+                  brandId={brandId}
                   onSuccess={() => setIsSheetOpen(false)}
                 />
               </ScrollArea>
@@ -76,8 +85,9 @@ export default function ContactsPage() {
           </Sheet>
         </div>
       </div>
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
+      
+      {contactsLoading ? (
+         <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (

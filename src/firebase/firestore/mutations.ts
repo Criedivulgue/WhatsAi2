@@ -1,6 +1,6 @@
 'use client';
 
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   updateProfile,

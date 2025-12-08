@@ -33,8 +33,8 @@ export async function createBrandAndUser(
     autoFollowUp
   } = data;
 
-  if (!password) {
-    throw new Error('A senha é obrigatória para criar um novo usuário.');
+  if (typeof password !== 'string' || !password) {
+    throw new Error('A senha é inválida ou não foi fornecida.');
   }
 
   // Step 1: Create the user in Firebase Authentication

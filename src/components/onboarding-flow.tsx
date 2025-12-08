@@ -83,7 +83,7 @@ export default function OnboardingFlow() {
   const firestore = useFirestore();
 
   const form = useForm<OnboardingFormValues>({
-    resolver: zodResolver(formSteps[step].schema),
+    resolver: zodResolver(formSchema), // Validate the entire schema on submit
     defaultValues: {
       brandName: '',
       brandTone: 'Amigável e profissional, com uma abordagem prestativa.',

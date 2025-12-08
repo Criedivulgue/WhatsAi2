@@ -6,7 +6,7 @@ import {
   updateProfile,
   type Auth,
 } from 'firebase/auth';
-import type { OnboardingData, Brand } from '@/lib/types';
+import type { OnboardingData, Brand, User } from '@/lib/types';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
@@ -28,6 +28,7 @@ export async function createBrandAndUser(
     attendantName,
     brandName,
     brandTone,
+    knowledgeBase,
     hardRules,
     softRules,
     autoSummarize,
@@ -58,6 +59,7 @@ export async function createBrandAndUser(
   batch.set(brandRef, {
     brandName,
     brandTone,
+    knowledgeBase: knowledgeBase || '',
     hardRules: hardRules || '',
     softRules: softRules || '',
     ownerId: user.uid,
@@ -103,4 +105,26 @@ export function updateBrandData(
       });
       errorEmitter.emit('permission-error', permissionError);
     });
+}
+
+/**
+ * Updates a user's profile data in Firestore.
+ * @param firestore The Firestore instance.
+ * @param userId The ID of the user to update.
+ * @param data The data to update.
+ */
+export function updateUserProfile(
+  firestore: Firestore,
+  userId: string,
+  data: Partial<User>
+) {
+  const userRef = doc(firestore, 'users', userId);
+  updateDoc(userRef, data).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: userRef.path,
+      operation: 'update',
+      requestResourceData: data,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+  });
 }

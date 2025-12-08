@@ -5,12 +5,14 @@ export type User = {
   name: string;
   email: string;
   brandId: string;
+  attendantPersona?: string;
 }
 
 export type Brand = {
   id: string;
   brandName: string;
   brandTone: string;
+  knowledgeBase?: string;
   hardRules?: string;
   softRules?: string;
   ownerId: string;
@@ -75,6 +77,7 @@ export type FollowUpSuggestions = {
 export type OnboardingData = {
   brandName: string;
   brandTone: string;
+  knowledgeBase?: string;
   hardRules?: string;
   softRules?: string;
   attendantName: string;

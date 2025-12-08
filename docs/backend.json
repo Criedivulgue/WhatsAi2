@@ -21,6 +21,10 @@
           "type": "string",
           "description": "Stylistic guidelines for the AI."
         },
+        "knowledgeBase": {
+          "type": "string",
+          "description": "A knowledge base of factual information about the brand for the AI."
+        },
         "ownerId": {
           "type": "string",
           "description": "The user ID of the attendant who owns the brand."
@@ -45,6 +49,10 @@
         "brandId": {
           "type": "string",
           "description": "The brand this attendant belongs to."
+        },
+        "attendantPersona": {
+          "type": "string",
+          "description": "Optional persona description for the AI to adopt for this specific attendant."
         }
       },
       "required": ["name", "email", "brandId"]

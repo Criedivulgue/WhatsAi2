@@ -36,6 +36,7 @@ import { Loader2 } from 'lucide-react';
 const brandSchema = z.object({
   brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
   brandTone: z.string().min(10, 'Por favor, descreva o tom da sua marca.'),
+  knowledgeBase: z.string().optional(),
   hardRules: z.string().optional(),
   softRules: z.string().optional(),
 });
@@ -59,7 +60,7 @@ type OnboardingFormValues = z.infer<typeof formSchema>;
 const formSteps = [
   {
     title: 'Informações da Marca',
-    fields: ['brandName', 'brandTone', 'hardRules', 'softRules'],
+    fields: ['brandName', 'brandTone', 'knowledgeBase', 'hardRules', 'softRules'],
     schema: brandSchema,
   },
   {
@@ -87,6 +88,7 @@ export default function OnboardingFlow() {
     defaultValues: {
       brandName: '',
       brandTone: 'Amigável e profissional, com uma abordagem prestativa.',
+      knowledgeBase: 'Produtos: Plano Básico, Plano Pro, Plano Empresarial. Horário de Atendimento: 9h às 18h, Seg-Sex.',
       hardRules: 'Nunca prometer funcionalidades que não existem; Não usar gírias.',
       softRules: 'Usar emojis com moderação; Sempre saudar o cliente pelo nome.',
       attendantName: '',
@@ -185,6 +187,20 @@ export default function OnboardingFlow() {
                         <FormControl>
                           <Textarea placeholder="ex: Amigável e profissional..." {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="knowledgeBase"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Base de Conhecimento (Opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="ex: Nossos produtos são X, Y, Z. Nossa política de devolução é..." {...field} />
+                        </FormControl>
+                        <FormDescription>Informações sobre seus produtos, serviços, políticas, etc.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

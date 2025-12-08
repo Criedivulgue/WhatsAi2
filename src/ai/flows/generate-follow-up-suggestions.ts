@@ -16,7 +16,7 @@ import {z} from 'genkit';
 const GenerateFollowUpSuggestionsInputSchema = z.object({
   contactName: z.string().describe('O nome do contato para acompanhamento.'),
   conversationSummary: z.string().describe('Um resumo da conversa anterior com o contato.'),
-  brandInformation: z.string().describe('Informações sobre a marca, tom e regras do usuário.'),
+  brandInformation: z.string().describe('Informações sobre a marca, tom, regras e base de conhecimento.'),
 });
 export type GenerateFollowUpSuggestionsInput = z.infer<typeof GenerateFollowUpSuggestionsInputSchema>;
 
@@ -44,9 +44,10 @@ const prompt = ai.definePrompt({
 
   Nome do Contato: {{{contactName}}}
   Resumo da Conversa: {{{conversationSummary}}}
-  Informações da Marca: {{{brandInformation}}}
+  Informações da Marca (incluindo Tom, Regras e Base de Conhecimento): {{{brandInformation}}}
 
-  Considere o tom e as regras da marca ao redigir o rascunho do e-mail and a mensagem do WhatsApp. Forneça uma recomendação de acompanhamento clara e concisa.
+  Use a base de conhecimento fornecida nas informações da marca para responder a quaisquer perguntas factuais que possam ter surgido.
+  Considere o tom e as regras da marca ao redigir o rascunho do e-mail e a mensagem do WhatsApp. Forneça uma recomendação de acompanhamento clara e concisa.
   Sugira um evento pré-criado para o Google Calendar, incluindo data, hora e pauta, para facilitar o processo de acompanhamento.
 
   Garanta que as sugestões sejam adaptadas ao contato e à conversa e que estejam alinhadas com as diretrizes da marca.

@@ -74,7 +74,7 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
   });
 
   useEffect(() => {
-    if (isEditMode) {
+    if (contact) {
       form.reset({
         name: contact.name,
         email: contact.email,
@@ -83,24 +83,24 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
         notes: contact.notes,
       });
     }
-  }, [contact, isEditMode, form]);
+  }, [contact, form]);
 
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      if (isEditMode) {
-        if (!contact.brandId) throw new Error('ID da marca não encontrado no contato existente.');
+      if (isEditMode && contact) {
         await updateContact(firestore, contact.id, data);
         toast({
           title: 'Contato atualizado!',
           description: `${data.name} foi atualizado com sucesso.`,
         });
-      } else {
-        if (!brandId) throw new Error('ID da marca não encontrado. O formulário não pode ser enviado.');
+      } else if (brandId) {
         await addContact(firestore, brandId, data);
         toast({
           title: 'Contato adicionado!',
           description: `${data.name} foi adicionado à sua lista.`,
         });
+      } else {
+        throw new Error('ID da marca não encontrado. O formulário não pode ser enviado.');
       }
       onSuccess?.();
     } catch (error: any) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -30,9 +30,10 @@ import Logo from './logo';
 import { Switch } from './ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { createBrandAndUser } from '@/firebase/firestore/mutations';
-import { useAuth, useFirestore } from '@/firebase';
-import { Loader2 } from 'lucide-react';
+import { useAuth, useFirestore, useStorage } from '@/firebase';
+import { Loader2, Upload } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { uploadAvatar } from '@/firebase/storage';
 
 const brandSchema = z.object({
   brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
@@ -45,7 +46,7 @@ const brandSchema = z.object({
 
 const detailsSchema = z.object({
   attendantName: z.string().min(2, 'Seu nome é obrigatório.'),
-  avatarUrl: z.string().url('Por favor, insira uma URL de imagem válida.'),
+  avatarUrl: z.string().url('A URL do avatar é obrigatória.'),
   attendantEmail: z.string().email('Endereço de e-mail inválido.'),
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
 });
@@ -81,10 +82,13 @@ const formSteps = [
 export default function OnboardingFlow() {
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
   const firestore = useFirestore();
+  const storage = useStorage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(formSchema), // Validate the entire schema on submit
@@ -106,9 +110,35 @@ export default function OnboardingFlow() {
     mode: 'onChange',
   });
 
-  const { trigger, handleSubmit, getValues, watch } = form;
+  const { trigger, handleSubmit, getValues, watch, setValue } = form;
   
   const avatarUrl = watch('avatarUrl');
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !storage) return;
+
+    // Use a temporary user ID for the path, as the user is not created yet.
+    const tempId = `onboarding-${Date.now()}`;
+    setIsUploading(true);
+    try {
+      const downloadURL = await uploadAvatar(storage, tempId, file, 'avatars');
+      setValue('avatarUrl', downloadURL, { shouldValidate: true });
+      toast({
+        title: 'Imagem pronta!',
+        description: 'Sua imagem de avatar foi carregada.',
+      });
+    } catch (error) {
+      console.error("Erro no upload do avatar durante onboarding:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro no Upload',
+        description: 'Não foi possível carregar a imagem. Tente novamente.',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const nextStep = async () => {
     const fieldsToValidate = formSteps[step].fields as (keyof OnboardingFormValues)[];
@@ -129,8 +159,10 @@ export default function OnboardingFlow() {
   const onSubmit = async () => {
     setIsLoading(true);
     try {
-      // Get all form values to ensure data is complete
       const data = getValues();
+      if (!data.avatarUrl) {
+          throw new Error('Por favor, faça o upload de uma imagem de avatar.');
+      }
       await createBrandAndUser(auth, firestore, data);
       toast({
         title: 'Configuração concluída!',
@@ -234,17 +266,32 @@ export default function OnboardingFlow() {
                     name="avatarUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>URL da Imagem do seu Avatar</FormLabel>
-                         <div className="flex items-center gap-4">
-                           <Avatar className="h-16 w-16">
+                        <FormLabel>Sua Foto de Perfil</FormLabel>
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-20 w-20">
                             <AvatarImage src={avatarUrl} alt="Avatar Preview" />
                             <AvatarFallback>{getValues('attendantName')?.charAt(0) || 'A'}</AvatarFallback>
                           </Avatar>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                          >
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            {isUploading ? 'Enviando...' : 'Escolher Foto'}
+                          </Button>
                           <FormControl>
-                            <Input placeholder="https://exemplo.com/sua-foto.jpg" {...field} />
+                            <Input 
+                              type="file" 
+                              ref={fileInputRef}
+                              className="hidden"
+                              onChange={handleAvatarUpload}
+                              accept="image/png, image/jpeg, image/gif"
+                            />
                           </FormControl>
                         </div>
-                        <FormDescription>Cole a URL para sua foto de perfil. Será seu cartão de visitas.</FormDescription>
+                        <FormDescription>Faça o upload de uma foto para seu perfil.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -336,7 +383,7 @@ export default function OnboardingFlow() {
                   Próximo
                 </Button>
               ) : (
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || isUploading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Finalizar Configuração
                 </Button>

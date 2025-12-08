@@ -1,8 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { Loader2, Upload } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -27,11 +27,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { useDoc, useFirestore, useUser } from '@/firebase';
+import { useDoc, useFirestore, useUser, useStorage } from '@/firebase';
 import {
   updateBrandData,
   updateUserProfile,
 } from '@/firebase/firestore/mutations';
+import { uploadAvatar } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { Brand, User } from '@/lib/types';
 import { doc } from 'firebase/firestore';
@@ -65,7 +66,11 @@ type AiSettingsFormValues = z.infer<typeof aiSettingsSchema>;
 export default function SettingsPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
   const { data: userData, loading: userDataLoading } = useDoc<User>(userDocRef);
@@ -146,6 +151,31 @@ export default function SettingsPage() {
       title: 'Sucesso!',
       description: 'As configurações de IA foram atualizadas.',
     });
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !storage) return;
+
+    setIsUploading(true);
+    try {
+      const downloadURL = await uploadAvatar(storage, user.uid, file);
+      attendantForm.setValue('avatarUrl', downloadURL, { shouldValidate: true });
+      await onAttendantSubmit({ avatarUrl: downloadURL });
+      toast({
+        title: 'Avatar atualizado!',
+        description: 'Sua nova foto de perfil foi salva.',
+      });
+    } catch (error) {
+      console.error("Erro no upload do avatar:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro no Upload',
+        description: 'Não foi possível enviar sua imagem. Tente novamente.',
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const isLoading = userLoading || userDataLoading || brandDataLoading;
@@ -288,26 +318,37 @@ export default function SettingsPage() {
                   onSubmit={attendantForm.handleSubmit(onAttendantSubmit)}
                   className="space-y-4"
                 >
-                   <FormField
-                    control={attendantForm.control}
-                    name="avatarUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL do Avatar</FormLabel>
-                        <div className="flex items-center gap-4">
-                           <Avatar className="h-16 w-16">
-                            <AvatarImage src={avatarUrl} alt="Avatar Preview" />
-                            <AvatarFallback>{userData?.name?.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <FormControl>
-                            <Input placeholder="https://exemplo.com/sua-foto.jpg" {...field} />
-                          </FormControl>
-                        </div>
-                        <FormDescription>Cole a URL para sua foto de perfil.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                   <div className="space-y-2">
+                      <FormLabel>Sua Foto de Perfil</FormLabel>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20">
+                          <AvatarImage src={avatarUrl} alt="Avatar Preview" />
+                          <AvatarFallback>{userData?.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="mr-2 h-4 w-4" />
+                          )}
+                          {isUploading ? 'Enviando...' : 'Trocar Foto'}
+                        </Button>
+                        <Input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                          accept="image/png, image/jpeg, image/gif"
+                        />
+                      </div>
+                      <FormDescription>Clique para fazer o upload de uma nova foto.</FormDescription>
+                    </div>
+
                   <FormField
                     control={attendantForm.control}
                     name="attendantPersona"
@@ -334,7 +375,7 @@ export default function SettingsPage() {
                     {attendantForm.formState.isSubmitting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Salvar Perfil
+                    Salvar Persona
                   </Button>
                 </form>
               </Form>

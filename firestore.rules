@@ -24,7 +24,9 @@ service cloud.firestore {
 
     // Rules for brands
     match /brands/{brandId} {
-      allow read, write: if isUserBrandMember(brandId);
+      // Allow public read for client chat, but restrict writes to brand members.
+      allow read: if true;
+      allow write: if isUserBrandMember(brandId);
     }
     
     // Rules for contacts

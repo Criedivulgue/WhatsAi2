@@ -46,7 +46,7 @@ const brandSchema = z.object({
 
 const detailsSchema = z.object({
   attendantName: z.string().min(2, 'Seu nome é obrigatório.'),
-  avatarUrl: z.string().url('A URL do avatar é obrigatória.'),
+  avatarUrl: z.string().url('Por favor, faça o upload de uma imagem de avatar.').min(1, 'Por favor, faça o upload de uma imagem de avatar.'),
   attendantEmail: z.string().email('Endereço de e-mail inválido.'),
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
 });
@@ -264,7 +264,7 @@ export default function OnboardingFlow() {
                    <FormField
                     control={form.control}
                     name="avatarUrl"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel>Sua Foto de Perfil</FormLabel>
                         <div className="flex items-center gap-4">

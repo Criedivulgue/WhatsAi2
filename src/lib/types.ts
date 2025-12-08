@@ -18,7 +18,7 @@ export type Brand = {
   hardRules?: string;
   softRules?: string;
   ownerId: string;
-  aiConfig: {
+  aiConfig?: {
     autoSummarize: boolean;
     autoEnrich: boolean;
     autoFollowUp: boolean;
@@ -87,7 +87,7 @@ export type OnboardingData = {
   avatarUrl: string;
   attendantEmail: string;
   password?: string;
-  autoSummarize: boolean;
-  autoEnrich: boolean;
-  autoFollowUp: boolean;
+  autoSummarize?: boolean;
+  autoEnrich?: boolean;
+  autoFollowUp?: boolean;
 };

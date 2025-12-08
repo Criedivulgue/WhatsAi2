@@ -7,6 +7,20 @@ export type User = {
   brandId: string;
 }
 
+export type Brand = {
+  id: string;
+  brandName: string;
+  brandTone: string;
+  hardRules?: string;
+  softRules?: string;
+  ownerId: string;
+  aiConfig: {
+    autoSummarize: boolean;
+    autoEnrich: boolean;
+    autoFollowUp: boolean;
+  };
+}
+
 export type Contact = {
   id: string;
   name: string;

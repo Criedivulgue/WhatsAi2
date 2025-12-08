@@ -1,12 +1,14 @@
 'use client';
 
-import { doc, writeBatch, type Firestore } from 'firebase/firestore';
+import { doc, writeBatch, type Firestore, updateDoc } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
   type Auth,
 } from 'firebase/auth';
-import type { OnboardingData } from '@/lib/types';
+import type { OnboardingData, Brand } from '@/lib/types';
+import { errorEmitter } from '../error-emitter';
+import { FirestorePermissionError } from '../errors';
 
 /**
  * Creates a new brand and a new user (attendant) in a single transaction.
@@ -78,4 +80,27 @@ export async function createBrandAndUser(
   await batch.commit();
 
   return { userId: user.uid, brandId: brandRef.id };
+}
+
+
+/**
+ * Updates a brand's data in Firestore.
+ * @param firestore The Firestore instance.
+ * @param brandId The ID of the brand to update.
+ * @param data The data to update.
+ */
+export function updateBrandData(
+  firestore: Firestore,
+  brandId: string,
+  data: Partial<Brand>
+) {
+  const brandRef = doc(firestore, 'brands', brandId);
+  updateDoc(brandRef, data).catch(async (serverError) => {
+      const permissionError = new FirestorePermissionError({
+        path: brandRef.path,
+        operation: 'update',
+        requestResourceData: data,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
 }

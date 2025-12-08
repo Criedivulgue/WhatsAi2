@@ -43,7 +43,7 @@ export default function DashboardLayout({
             <TooltipTrigger asChild>
               <Button
                 asChild
-                variant={pathname.startsWith(item.href) ? 'default' : 'ghost'}
+                variant={pathname.startsWith(item.href) && !pathname.startsWith(`${item.href}/`) ? 'default' : 'ghost'}
                 size="icon"
                 className="rounded-lg"
                 aria-label={item.label}
@@ -68,12 +68,15 @@ export default function DashboardLayout({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="ghost"
+              asChild
+              variant={pathname.startsWith('/dashboard/settings') ? 'default' : 'ghost'}
               size="icon"
               className="mt-auto rounded-lg"
               aria-label="Configurações"
             >
-              <Settings className="size-5" />
+              <Link href="/dashboard/settings">
+                <Settings className="size-5" />
+              </Link>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right" sideOffset={5}>
@@ -146,6 +149,17 @@ export default function DashboardLayout({
                     {item.label}
                   </Link>
                 ))}
+                <Link
+                  href="/dashboard/settings"
+                  className={`flex items-center gap-4 px-2.5 ${
+                    pathname.startsWith('/dashboard/settings')
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Settings className="h-5 w-5" />
+                  Configurações
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>

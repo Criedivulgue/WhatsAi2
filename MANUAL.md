@@ -48,6 +48,35 @@ A arquitetura é dividida em camadas que se comunicam de forma clara:
 `-- MANUAL.md              # Este documento
 ```
 
+### 1.3. Desenvolvimento Modular Incremental
+
+A construção do WhatsAi segue uma lógica de camadas, onde cada sistema se apoia no anterior. Isso facilita o desenvolvimento, testes e a integração de novas funcionalidades.
+
+1.  **Foundation (Base):**
+    -   Setup do Next.js 14 (App Router).
+    -   Configuração do Firebase (Auth, Firestore).
+    -   Estrutura de UI com ShadCN e Tailwind CSS.
+
+2.  **Core Systems (Sistemas Centrais):**
+    -   **Onboarding:** Coleta de dados da marca e do atendente.
+    -   **Gestão de Contatos (CRM):** Criação, edição e visualização de contatos no Firestore.
+    -   **Estrutura do Chat:** Modelos de dados para `chats` e `messages`.
+
+3.  **AI Systems (Sistemas de IA):**
+    -   Integração do Genkit (Google AI).
+    -   Definição dos fluxos de IA: `generateChatSummary`, `suggestProfileEnrichments`, etc.
+    -   Criação de `Server Actions` para invocar os fluxos de IA de forma segura.
+
+4.  **Operational Systems (Sistemas Operacionais):**
+    -   **Dashboard do Atendente:** Interface de chat, lista de conversas, painel de contato.
+    -   **PWA do Cliente:** Interface de chat para o cliente final.
+    -   Implementação dos **Estados de Chat** para organização (`Active`, `Closed`, etc.).
+
+5.  **Advanced Features (Funcionalidades Avançadas):**
+    -   **AI Follow-Up System:** Geração de drafts e sugestões de eventos.
+    -   **Sistema de Notificações Internas:** Lembretes para atendentes.
+    -   **Logs de Auditoria da IA:** Rastreamento de todas as operações de IA.
+
 ---
 
 ## 2. Onboarding e Contexto da Marca
@@ -130,7 +159,10 @@ A PWA oferece uma experiência de chat leve e sem atritos para o cliente final.
 
 1.  **Acesso e Identificação:** O cliente acessa via link e insere o número de telefone. Nenhuma conta é necessária. Uma breve **política de privacidade** é exibida, informando que o número é usado para identificar a sessão de chat.
 2.  **Validade da Sessão:** Uma sessão de chat permanece "ativa" por um período pré-definido (ex: 24 horas). Se o cliente retornar dentro desse período, ele continua a mesma conversa.
-3.  **Timeout e Reabertura:** Após o período de inatividade, o chat é movido para o estado `Closed`. Se o cliente com o mesmo número de telefone iniciar uma nova conversa, um novo chat é criado, mas vinculado ao histórico do contato, preservando o contexto para o atendente. Isso evita a reabertura infinita de chats antigos e mantém as conversas organizadas.
+3.  **Timeout e Reabertura:** Após o período de inatividade, o chat é movido para o estado `Closed`. Se o cliente com o mesmo número de telefone iniciar uma nova conversa:
+    -   Se o chat anterior foi **fechado manualmente pelo atendente**, um **novo chat** é criado. Isso evita que conversas finalizadas sejam reabertas indevidamente.
+    -   Se o chat anterior foi **fechado por timeout**, e o cliente retorna dentro da janela de validade (ex: 24h), a **conversa existente é reaberta** e movida para o estado `Active`.
+    -   Em ambos os casos, o novo chat é vinculado ao histórico do contato, preservando o contexto para o atendente.
 
 ### 5.2. Brand Context Injection
 
@@ -156,6 +188,22 @@ Para completar o ciclo de automação, o sistema de follow-up também inclui:
 -   **Notificações Internas:** Se a IA identifica um item de ação com prazo (ex: "Enviar proposta até sexta-feira"), o sistema cria uma notificação no painel do atendente responsável.
 -   **Agendamento de Eventos:** A IA pode sugerir a criação de um evento no Google Calendar, pré-preenchendo título, descrição e convidados com base no contexto da conversa, aguardando apenas a confirmação do atendente.
 
+### 6.3. Gerenciamento de Contexto e Memória da IA
+
+Para garantir relevância em conversas longas e ao longo do tempo, a IA utiliza uma estratégia de memória hierárquica:
+
+-   **Memória de Curto Prazo (Janela de Contexto):** Em uma sessão de chat ativa, a IA mantém as mensagens mais recentes na janela de contexto do modelo (ex: últimas 20-30 mensagens). Isso garante respostas rápidas e contextuais para o diálogo imediato. O limite de tokens é maior no dashboard do atendente do que na PWA do cliente para permitir análises mais complexas.
+-   **Memória de Médio Prazo (Resumos de Chat):** Ao final de cada conversa, um resumo é gerado e salvo. Para novas interações com o mesmo cliente, a IA consulta os **resumos de conversas anteriores** para "lembrar" de pontos importantes sem precisar reprocessar todo o histórico.
+-   **Memória de Longo Prazo (Notas Internas e Perfil do Contato):** As `Notas Internas`, `Tipo de Contato` e `Interesses` funcionam como uma base de conhecimento persistente. A IA consulta esses dados antes de qualquer análise para entender o relacionamento estratégico com o cliente, priorizando essa informação sobre o conteúdo de um único chat.
+
+### 6.4. Tratamento de Erros da IA (AI Error Handling)
+
+A robustez dos fluxos de IA é garantida por um sistema de tratamento de erros:
+-   **Fallback de JSON Inválido:** Se o modelo de linguagem retorna um JSON malformado, o sistema tenta corrigir a estrutura ou, em caso de falha, retorna uma mensagem de erro padronizada para o atendente.
+-   **Timeout Safety:** Cada fluxo de IA tem um timeout definido (ex: 30 segundos). Se a execução exceder esse tempo, a operação é cancelada e um erro é retornado.
+-   **Retry Automático:** Em caso de falhas de rede ou timeouts, o sistema realiza uma nova tentativa automática antes de reportar o erro final.
+-   **Captura de Erros:** Todos os erros de execução dos fluxos de IA são registrados na coleção `ai_logs` no Firestore, com um status `error`, permitindo análise e depuração.
+
 ---
 
 ## 7. Logs de IA e Auditoria
@@ -168,6 +216,8 @@ Para garantir transparência, depuração e melhoria contínua, cada ação da I
 -   `modelUsed`: Modelo de linguagem utilizado (ex: `gemini-2.5-flash`).
 -   `inputHash`: Hash do objeto de entrada para referência.
 -   `outputJSON`: O JSON bruto retornado pelo modelo.
+-   `status`: `success`, `error`.
+-   `errorMessage`: Mensagem de erro, se houver.
 -   `userAction`: Ação do atendente (`accepted` ou `dismissed`), se aplicável.
 -   `timestamp`: Data e hora da execução.
 
@@ -219,6 +269,8 @@ Para garantir transparência, depuração e melhoria contínua, cada ação da I
   - modelUsed: string
   - inputHash: string
   - outputJSON: string
+  - status: string ('success', 'error')
+  - errorMessage: string
   - userAction: string ('accepted', 'dismissed')
   - timestamp: timestamp
 ```

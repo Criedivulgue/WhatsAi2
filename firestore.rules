@@ -4,26 +4,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow users to read their own user document
+    // Helper Functions
+    function isUserAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserBrandId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.brandId;
+    }
+
+    function isUserBrandMember(brandId) {
+      return isUserAuthenticated() && getUserBrandId() == brandId;
+    }
+
+    // Rules for user profiles
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      allow read, write: if isUserAuthenticated() && request.auth.uid == userId;
     }
 
-    // Allow brand members to read/write data associated with their brand
+    // Rules for brands
     match /brands/{brandId} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.brandId == brandId;
+      allow read, write: if isUserBrandMember(brandId);
     }
-
+    
+    // Rules for contacts
     match /contacts/{contactId} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.brandId == resource.data.brandId;
+      allow read, list: if isUserBrandMember(request.query.brandId) || isUserBrandMember(resource.data.brandId);
+      allow create: if isUserBrandMember(request.resource.data.brandId);
+      allow update, delete: if isUserBrandMember(resource.data.brandId);
     }
 
+    // Rules for chats and their messages
     match /chats/{chatId} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.brandId == resource.data.brandId;
+      // Allow read/write for brand members or for unauthenticated users on client-chat pages
+      allow read, write: if (isUserAuthenticated() && isUserBrandMember(resource.data.brandId)) || 
+                           (request.auth == null && resource.data.brandId != null);
       
       match /messages/{messageId} {
-        allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.brandId == get(/databases/$(database)/documents/chats/$(chatId)).data.brandId;
+        // Allow read/write for brand members or unauthenticated users for messages in accessible chats
+        allow read, write: if (isUserAuthenticated() && isUserBrandMember(get(/databases/$(database)/documents/chats/$(chatId)).data.brandId)) ||
+                           (request.auth == null && get(/databases/$(database)/documents/chats/$(chatId)).data.brandId != null);
       }
     }
   }

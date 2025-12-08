@@ -1,28 +1,79 @@
-import { Button } from "@/components/ui/button";
-import { mockContacts } from "@/lib/data";
-import { Download, PlusCircle } from "lucide-react";
-import { columns } from "./components/columns";
-import { DataTable } from "./components/data-table";
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { columns } from './components/columns';
+import { DataTable } from './components/data-table';
+import { useUser, useFirestore, useDoc, useCollection } from '@/firebase';
+import type { Contact, User } from '@/lib/types';
+import { collection, query, where, doc } from 'firebase/firestore';
+import { useMemo, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { ContactForm } from './components/contact-form';
 
 export default function ContactsPage() {
-    const data = mockContacts;
+  const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Contatos</h2>
-                <div className="flex items-center space-x-2">
-                    <Button variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
-                        Importar
-                    </Button>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Adicionar Contato
-                    </Button>
-                </div>
-            </div>
-            <DataTable columns={columns} data={data} />
+  // Get user profile to find the brandId
+  const userDocRef = useMemo(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: userData, loading: userDataLoading } = useDoc<User>(userDocRef);
+
+  // Query for contacts belonging to the user's brand
+  const contactsQuery = useMemo(() => {
+    if (!userData?.brandId) return null;
+    return query(
+      collection(firestore, 'contacts'),
+      where('brandId', '==', userData.brandId)
+    );
+  }, [userData, firestore]);
+
+  const { data: contactsData, loading: contactsLoading } =
+    useCollection<Contact>(contactsQuery);
+  const isLoading = userLoading || userDataLoading || contactsLoading;
+
+  return (
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Contatos</h2>
+        <div className="flex items-center space-x-2">
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Contato
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>Adicionar Novo Contato</SheetTitle>
+              </SheetHeader>
+              <ContactForm
+                brandId={userData?.brandId}
+                onSuccess={() => setIsSheetOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
         </div>
-    )
+      </div>
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <DataTable columns={columns} data={contactsData} />
+      )}
+    </div>
+  );
 }

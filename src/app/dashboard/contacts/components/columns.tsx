@@ -38,7 +38,7 @@ export const columns: ColumnDef<Contact>[] = [
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={avatar?.imageUrl} alt={contact.name} data-ai-hint={avatar?.imageHint}/>
-            <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{contact.name ? contact.name.charAt(0) : '?'}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <span className="font-medium">{contact.name}</span>
@@ -72,6 +72,7 @@ export const columns: ColumnDef<Contact>[] = [
     header: 'Categorias',
     cell: ({ row }) => {
       const categories = row.original.categories;
+      if (!categories || categories.length === 0) return null;
       return (
         <div className="flex flex-wrap gap-1">
           {categories.map((cat) => (

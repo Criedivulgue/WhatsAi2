@@ -4,6 +4,7 @@
 import type { Contact, Chat } from './types';
 import { Timestamp } from 'firebase/firestore';
 
+// Note: This data is no longer actively used in the contacts page.
 export const mockContacts: Contact[] = [
   {
     id: 'contact-1',

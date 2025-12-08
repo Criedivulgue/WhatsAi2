@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useParams, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   MessageSquare,
   Users,
@@ -9,13 +9,14 @@ import {
   Settings,
   LogOut,
   Copy,
+  Loader2,
 } from 'lucide-react';
 
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
@@ -25,128 +26,105 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth, useDoc, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useMemo } from 'react';
-import type { User } from '@/lib/types';
-import { doc } from 'firebase/firestore';
+import { UserProfileProvider, useUserProfile } from '@/firebase/auth/user-profile-provider';
 
 const navItems = [
   { href: '/dashboard', icon: MessageSquare, label: 'Chat' },
   { href: '/dashboard/contacts', icon: Users, label: 'Contatos' },
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const params = useParams();
-  const router = useRouter();
   const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
-  const user = auth.currentUser;
-
-  const userDocRef = useMemo(() => {
-    if (!user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
-  const { data: userData } = useDoc<User>(userDocRef);
-  
-  const brandIdFromUrl = params.brandId;
-
-  useEffect(() => {
-    if (user && brandIdFromUrl && user.uid === brandIdFromUrl) {
-      toast({
-        title: 'Ação Inválida',
-        description:
-          'O link do cliente é para seus usuários. Você foi redirecionado para seu painel.',
-      });
-      router.push('/dashboard');
-    }
-  }, [user, brandIdFromUrl, router, toast]);
+  const { user: composedUser, loading } = useUserProfile();
 
   const handleCopyLink = () => {
-    if (user) {
-      const chatLink = `${window.location.origin}/client-chat/${user.uid}`;
+    if (composedUser?.brandId) {
+      const chatLink = `${window.location.origin}/c/${composedUser.brandId}`;
       navigator.clipboard.writeText(chatLink);
       toast({
         title: 'Link Copiado!',
         description: 'O link do chat do cliente foi copiado para sua área de transferência.',
       });
+    } else {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível encontrar o ID da sua marca para gerar o link.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const mainNav = (
-    <nav className="grid gap-1 p-2">
-      <TooltipProvider>
-        {navItems.map((item) => (
-          <Tooltip key={item.label}>
+  const sidebarNav = (
+    <TooltipProvider>
+      <nav className="flex flex-col h-full gap-1 p-2">
+        <div className="flex-grow">
+          {navItems.map((item) => (
+            <Tooltip key={item.label}>
+              <TooltipTrigger asChild>
+                <Button
+                  asChild
+                  variant={pathname === item.href ? 'default' : 'ghost'}
+                  size="icon"
+                  className="rounded-lg"
+                  aria-label={item.label}
+                >
+                  <Link href={item.href}>
+                    <item.icon className="size-5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={5}>
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+
+        <div>
+          <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 asChild
-                variant={pathname.startsWith(item.href) && !pathname.startsWith(`${item.href}/`) ? 'default' : 'ghost'}
+                variant={pathname.startsWith('/dashboard/settings') ? 'default' : 'ghost'}
                 size="icon"
                 className="rounded-lg"
-                aria-label={item.label}
+                aria-label="Configurações"
               >
-                <Link href={item.href}>
-                  <item.icon className="size-5" />
+                <Link href="/dashboard/settings">
+                  <Settings className="size-5" />
                 </Link>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={5}>
-              {item.label}
+              Configurações
             </TooltipContent>
           </Tooltip>
-        ))}
-      </TooltipProvider>
-    </nav>
-  );
-
-  const footerNav = (
-    <nav className="mt-auto grid gap-1 p-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              asChild
-              variant={pathname.startsWith('/dashboard/settings') ? 'default' : 'ghost'}
-              size="icon"
-              className="mt-auto rounded-lg"
-              aria-label="Configurações"
-            >
-              <Link href="/dashboard/settings">
-                <Settings className="size-5" />
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={5}>
-            Configurações
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="rounded-lg"
-              aria-label="Sair"
-            >
-              <Link href="/">
-                <LogOut className="size-5" />
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={5}>
-            Sair
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </nav>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="rounded-lg"
+                aria-label="Sair"
+                onClick={() => auth.signOut()}
+              >
+                <Link href="/">
+                  <LogOut className="size-5" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={5}>
+              Sair
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </nav>
+    </TooltipProvider>
   );
 
   return (
@@ -154,12 +132,11 @@ export default function DashboardLayout({
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
         <Link
           href="/dashboard"
-          className="flex h-14 items-center justify-center bg-primary"
+          className="flex h-14 items-center justify-center bg-primary shrink-0"
         >
           <Logo className="h-8 w-8 text-primary-foreground" />
         </Link>
-        {mainNav}
-        {footerNav}
+        {sidebarNav}
       </aside>
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -172,7 +149,7 @@ export default function DashboardLayout({
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs">
               <nav className="grid gap-6 text-lg font-medium">
-                <Link
+                 <Link
                   href="/dashboard"
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
@@ -184,7 +161,7 @@ export default function DashboardLayout({
                     key={item.label}
                     href={item.href}
                     className={`flex items-center gap-4 px-2.5 ${
-                      pathname.startsWith(item.href)
+                      pathname === item.href
                         ? 'text-foreground'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
@@ -213,13 +190,27 @@ export default function DashboardLayout({
                 Copiar link do chat
             </Button>
           </div>
-           <Avatar>
-            <AvatarImage src={userData?.avatarUrl} alt="User avatar" />
-            <AvatarFallback>{userData?.name?.charAt(0) || 'U'}</AvatarFallback>
+          <Avatar>
+            {loading ? (
+              <AvatarFallback><Loader2 className="animate-spin"/></AvatarFallback>
+            ) : (
+              <>
+                <AvatarImage src={composedUser?.avatarUrl} alt="User avatar" />
+                <AvatarFallback>{composedUser?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+              </>
+            )}
           </Avatar>
         </header>
         <main className="flex-1">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <UserProfileProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </UserProfileProvider>
   );
 }

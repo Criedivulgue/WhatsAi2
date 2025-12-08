@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useDoc, useFirestore } from '@/firebase';
+import { contactConverter } from '@/firebase/converters';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type {
@@ -71,10 +72,10 @@ export function ContactPanel({ chat }: ContactPanelProps) {
 
   const contactRef = useMemo(() => {
     if (!chat?.contactId) return null;
-    return doc(firestore, 'contacts', chat.contactId);
+    return doc(firestore, 'contacts', chat.contactId).withConverter(contactConverter);
   }, [chat?.contactId, firestore]);
 
-  const { data: contact, loading } = useDoc<Contact>(contactRef);
+  const [contact, loading] = useDoc<Contact>(contactRef);
   
   if (loading) {
     return (
@@ -92,9 +93,19 @@ export function ContactPanel({ chat }: ContactPanelProps) {
       </div>
     );
   }
-  const avatar = PlaceHolderImages.find((p) => p.id === contact.avatar);
+  const contactData = contact.data();
 
-  const calendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=Reunião+com+${encodeURIComponent(contact.name)}`;
+  if (!contactData) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+        <p className="text-muted-foreground">Dados do contato não encontrados.</p>
+      </div>
+    );
+  }
+
+  const avatar = PlaceHolderImages.find((p) => p.id === contactData.avatar);
+
+  const calendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=Reunião+com+${encodeURIComponent(contactData.name)}`;
 
   return (
     <div className="flex h-full flex-col">
@@ -106,17 +117,17 @@ export function ContactPanel({ chat }: ContactPanelProps) {
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={avatar?.imageUrl} alt={contact.name} data-ai-hint={avatar?.imageHint} />
+                <AvatarImage src={avatar?.imageUrl} alt={contactData.name} data-ai-hint={avatar?.imageHint} />
                 <AvatarFallback className="text-2xl">
-                  {contact.name.charAt(0)}
+                  {contactData.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1">
                 <div className='flex justify-between items-start'>
-                  <CardTitle>{contact.name}</CardTitle>
+                  <CardTitle>{contactData.name}</CardTitle>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                      <Link href={`mailto:${contact.email}`} target="_blank">
+                      <Link href={`mailto:${contactData.email}`} target="_blank">
                         <Mail className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -127,20 +138,20 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                     </Button>
                   </div>
                 </div>
-                <CardDescription>{contact.phone}</CardDescription>
-                <CardDescription>{contact.email}</CardDescription>
+                <CardDescription>{contactData.phone}</CardDescription>
+                <CardDescription>{contactData.email}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div>
                   <h4 className="font-semibold text-sm">Tipo de Contato</h4>
-                  <Badge>{contact.contactType}</Badge>
+                  <Badge>{contactData.contactType}</Badge>
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm">Categorias</h4>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {contact.categories.map((cat) => (
+                    {contactData.categories?.map((cat: string) => (
                       <Badge key={cat} variant="secondary">
                         {cat}
                       </Badge>
@@ -150,7 +161,7 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                 <div>
                   <h4 className="font-semibold text-sm">Interesses</h4>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {contact.interests.map((interest) => (
+                    {contactData.interests?.map((interest: string) => (
                       <Badge key={interest} variant="outline">
                         {interest}
                       </Badge>
@@ -161,14 +172,14 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                 <div>
                   <h4 className="font-semibold text-sm">Anotações Internas</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {contact.notes}
+                    {contactData.notes}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <AiTools chat={{...chat, contact}} />
+          <AiTools chat={{...chat, contact: contactData } as Chat} />
         </div>
       </ScrollArea>
     </div>

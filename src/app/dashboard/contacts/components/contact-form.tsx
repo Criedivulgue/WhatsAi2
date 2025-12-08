@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,15 +27,12 @@ import type { Contact } from '@/lib/types';
 import { useFirestore } from '@/firebase';
 import { addContact, updateContact } from '@/firebase/firestore/contacts';
 import { useEffect } from 'react';
-
-const phoneRegex = new RegExp(
-  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
-);
+import { IMaskInput } from 'react-imask';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, 'O nome é obrigatório.'),
   email: z.string().email('Email inválido.').optional().or(z.literal('')),
-  phone: z.string().regex(phoneRegex, 'Número de telefone inválido.'),
+  phone: z.string().min(10, "O telefone deve ter pelo menos 10 dígitos."),
   contactType: z.enum([
     'Lead',
     'Prospect',
@@ -51,11 +47,16 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 interface ContactFormProps {
   contact?: Contact;
-  brandId?: string;
+  userId?: string;
   onSuccess?: () => void;
 }
 
-export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
+const phoneMask = [
+    { mask: '(00) 0000-0000' },
+    { mask: '(00) 00000-0000' },
+];
+
+export function ContactForm({ contact, userId, onSuccess }: ContactFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -77,30 +78,37 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
     if (contact) {
       form.reset({
         name: contact.name,
-        email: contact.email,
+        email: contact.email ?? '',
         phone: contact.phone,
         contactType: contact.contactType,
-        notes: contact.notes,
+        notes: contact.notes ?? '',
       });
     }
   }, [contact, form]);
 
   const onSubmit = async (data: ContactFormValues) => {
+    if (!userId) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'ID do usuário não encontrado. Não é possível salvar o contato.',
+        });
+        return;
+    }
+
     try {
       if (isEditMode && contact) {
-        await updateContact(firestore, contact.id, data);
+        await updateContact(firestore, userId, contact.id, data);
         toast({
           title: 'Contato atualizado!',
           description: `${data.name} foi atualizado com sucesso.`,
         });
-      } else if (brandId) {
-        await addContact(firestore, brandId, data);
+      } else {
+        await addContact(firestore, userId, data);
         toast({
           title: 'Contato adicionado!',
           description: `${data.name} foi adicionado à sua lista.`,
         });
-      } else {
-        throw new Error('ID da marca não encontrado. O formulário não pode ser enviado.');
       }
       onSuccess?.();
     } catch (error: any) {
@@ -148,7 +156,14 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
             <FormItem>
               <FormLabel>Telefone</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="+55 11 99999-9999" {...field} />
+                <IMaskInput
+                  mask={phoneMask}
+                  value={field.value}
+                  unmask={true}
+                  onAccept={(value: any) => field.onChange(value)}
+                  placeholder="(11) 99999-9999"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -191,7 +206,7 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={form.formState.isSubmitting || (!isEditMode && !brandId)} className="w-full">
+        <Button type="submit" disabled={form.formState.isSubmitting || !userId} className="w-full">
           {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditMode ? 'Salvar Alterações' : 'Adicionar Contato'}
         </Button>

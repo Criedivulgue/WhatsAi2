@@ -20,21 +20,24 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  isLoading?: boolean; // Make isLoading an optional prop
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState({});
 
   const table = useReactTable({
-    data,
+    data: isLoading ? [] : data, // If loading, provide an empty array to avoid errors
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -70,7 +73,13 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -108,7 +117,7 @@ export function DataTable<TData, TValue>({
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          disabled={!table.getCanPreviousPage() || isLoading}
         >
           Anterior
         </Button>
@@ -116,7 +125,7 @@ export function DataTable<TData, TValue>({
           variant="outline"
           size="sm"
           onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          disabled={!table.getCanNextPage() || isLoading}
         >
           Próximo
         </Button>

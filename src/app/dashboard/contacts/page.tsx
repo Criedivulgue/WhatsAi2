@@ -8,10 +8,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
-import type { Contact, User } from '@/lib/types';
-import { collection, doc, query, where } from 'firebase/firestore';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { useCollection, useFirestore, useUser } from '@/firebase';
+import { contactConverter } from '@/firebase/converters';
+import { collection, query } from 'firebase/firestore';
+import { PlusCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { columns } from './components/columns';
 import { ContactForm } from './components/contact-form';
@@ -19,31 +19,20 @@ import { DataTable } from './components/data-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ContactsPage() {
-  const { user, loading: userLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  // Get user profile to find the brandId
-  const userDocRef = useMemo(() => {
-    if (!user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
-  const { data: userData, loading: userDataLoading } = useDoc<User>(userDocRef);
-  const brandId = userData?.brandId;
-
-  // Query for contacts belonging to the user's brand
   const contactsQuery = useMemo(() => {
-    if (!brandId) return null;
+    if (!user) return null;
     return query(
-      collection(firestore, 'contacts'),
-      where('brandId', '==', brandId)
+      collection(firestore, 'users', user.uid, 'contacts').withConverter(
+        contactConverter
+      )
     );
-  }, [brandId, firestore]);
+  }, [user, firestore]);
 
-  const { data: contactsData, loading: contactsLoading } =
-    useCollection<Contact>(contactsQuery);
-
-  const isLoading = userLoading || userDataLoading;
+  const { data: contacts, loading: contactsLoading } = useCollection(contactsQuery);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -52,7 +41,8 @@ export default function ContactsPage() {
         <div className="flex items-center space-x-2">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button disabled={isLoading}>
+              {/* The button is disabled only while contacts are loading */}
+              <Button disabled={contactsLoading}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Contato
               </Button>
@@ -62,29 +52,17 @@ export default function ContactsPage() {
                 <SheetTitle>Adicionar Novo Contato</SheetTitle>
               </SheetHeader>
               <ScrollArea className="flex-grow">
-                {isLoading ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <ContactForm
-                    brandId={brandId}
-                    onSuccess={() => setIsSheetOpen(false)}
-                  />
-                )}
+                <ContactForm
+                  userId={user?.uid}
+                  onSuccess={() => setIsSheetOpen(false)}
+                />
               </ScrollArea>
             </SheetContent>
           </Sheet>
         </div>
       </div>
-      
-      {contactsLoading ? (
-         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <DataTable columns={columns} data={contactsData} />
-      )}
+      {/* Pass the loading state to the now-intelligent DataTable */}
+      <DataTable columns={columns} data={contacts || []} isLoading={contactsLoading} />
     </div>
   );
 }

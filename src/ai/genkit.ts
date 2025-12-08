@@ -1,11 +1,11 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
-import {next} from '@genkit-ai/next';
+import next from '@genkit-ai/next'; // Corrected: Use default import
 
 export const ai = genkit({
   plugins: [
     googleAI(),
-    next({
+    next({ // Corrected: Use the default export
       // Import all the flow definitions so that they can be exposed as API
       // endpoints.
       flows: [

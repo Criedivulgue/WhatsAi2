@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, uploadFileToStorage } from '@/firebase';
-import { createBrand } from '@/firebase/firestore/mutations';
-import { doc, setDoc } from 'firebase/firestore';
+import { createBrandAndUserProfile } from '@/firebase/firestore/mutations';
 import { Loader2, Upload } from 'lucide-react';
 import Logo from '@/components/logo';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import type { UserProfileData } from '@/lib/types';
 
 export default function OnboardingPage() {
   const { user, loading: userLoading } = useUser();
@@ -19,8 +19,14 @@ export default function OnboardingPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [brandName, setBrandName] = useState('');
-  const [slogan, setSlogan] = useState('');
+  // Use a single state for form data, mirroring UserProfileData
+  const [formData, setFormData] = useState<Partial<UserProfileData>>({
+    publicName: '',
+    slogan: '',
+    city: '',
+    state: '',
+    whatsappNumber: '',
+  });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +45,11 @@ export default function OnboardingPage() {
     return null;
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -51,34 +62,34 @@ export default function OnboardingPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!brandName || !slogan) {
+    if (!formData.publicName || !formData.whatsappNumber) {
       toast({
         title: 'Campos Obrigatórios',
-        description: 'Por favor, preencha o nome da marca e o slogan.',
+        description: 'Por favor, preencha pelo menos o nome da marca e o WhatsApp.',
+        variant: 'destructive',
       });
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // 1. Upload avatar if one was selected
       let avatarUrl = '';
       if (avatarFile) {
         avatarUrl = await uploadFileToStorage(user.uid, 'avatars', avatarFile);
       }
 
-      // 2. Create the brand document
-      const brandId = await createBrand(firestore, { brandName, slogan });
+      // Combine form data and avatar URL into the final object
+      const finalProfileData: UserProfileData = {
+        publicName: formData.publicName || '',
+        slogan: formData.slogan || '',
+        avatarUrl: avatarUrl,
+        city: formData.city || '',
+        state: formData.state || '',
+        whatsappNumber: formData.whatsappNumber || '',
+      };
 
-      // 3. Create the user document with the avatar URL and the link to the brand (brandId)
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
-        uid: user.uid,
-        email: user.email || '',
-        avatarUrl: avatarUrl, 
-        brandId: brandId,     
-        createdAt: new Date(),
-      });
+      // Call the new, consolidated function
+      await createBrandAndUserProfile(firestore, user.uid, finalProfileData);
 
       toast({
         title: 'Bem-vindo(a)!',
@@ -100,18 +111,19 @@ export default function OnboardingPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
         <div className="flex flex-col space-y-2 text-center">
           <div className="mx-auto mb-4">
             <Logo className="h-12 w-12 text-primary" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Configure sua Marca</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Configure Sua Marca</h1>
           <p className="text-sm text-muted-foreground">
-            Essas informações serão usadas para identificar seu negócio.
+            Complete seu perfil para que nosso assistente possa atender seus clientes.
           </p>
         </div>
 
         <form onSubmit={handleOnboardingSubmit} className="space-y-4">
+          {/* Avatar Input */}
           <div className="grid gap-2">
             <Label>Avatar da Marca</Label>
             <div className="flex items-center gap-4">
@@ -129,28 +141,28 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="brandName">Nome da Marca</Label>
-            <Input
-              id="brandName"
-              placeholder="O nome do seu negócio"
-              value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="slogan">Slogan</Label>
-            <Input
-              id="slogan"
-              placeholder="Uma frase curta que descreve sua marca"
-              value={slogan}
-              onChange={(e) => setSlogan(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
+          {/* Form Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2 col-span-2">
+              <Label htmlFor="publicName">Nome da Marca</Label>
+              <Input id="publicName" placeholder="O nome do seu negócio" value={formData.publicName} onChange={handleInputChange} required disabled={isSubmitting} />
+            </div>
+            <div className="grid gap-2 col-span-2">
+              <Label htmlFor="slogan">Slogan</Label>
+              <Input id="slogan" placeholder="Uma frase que descreve sua marca" value={formData.slogan} onChange={handleInputChange} disabled={isSubmitting} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="city">Cidade</Label>
+              <Input id="city" placeholder="Ex: São Paulo" value={formData.city} onChange={handleInputChange} disabled={isSubmitting} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="state">Estado</Label>
+              <Input id="state" placeholder="Ex: SP" value={formData.state} onChange={handleInputChange} disabled={isSubmitting} />
+            </div>
+            <div className="grid gap-2 col-span-2">
+              <Label htmlFor="whatsappNumber">WhatsApp</Label>
+              <Input id="whatsappNumber" placeholder="+55 11 99999-9999" value={formData.whatsappNumber} onChange={handleInputChange} required disabled={isSubmitting} />
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>

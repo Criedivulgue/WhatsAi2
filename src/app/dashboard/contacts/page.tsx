@@ -1,13 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2 } from 'lucide-react';
-import { columns } from './components/columns';
-import { DataTable } from './components/data-table';
-import { useUser, useFirestore, useDoc, useCollection } from '@/firebase';
-import type { Contact, User } from '@/lib/types';
-import { collection, query, where, doc } from 'firebase/firestore';
-import { useMemo, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -15,7 +8,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import type { Contact, User } from '@/lib/types';
+import { collection, doc, query, where } from 'firebase/firestore';
+import { Loader2, PlusCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { columns } from './components/columns';
 import { ContactForm } from './components/contact-form';
+import { DataTable } from './components/data-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ContactsPage() {
@@ -50,9 +51,15 @@ export default function ContactsPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Contatos</h2>
         <div className="flex items-center space-x-2">
+          {isLoading ? (
+             <Button disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Adicionar Contato
+              </Button>
+          ) : (
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button disabled={!brandId}>
+              <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Contato
               </Button>
@@ -69,6 +76,7 @@ export default function ContactsPage() {
               </ScrollArea>
             </SheetContent>
           </Sheet>
+          )}
         </div>
       </div>
       

@@ -32,7 +32,7 @@ export default function ClientChatPage() {
   const [contactId, setContactId] = useState<string | null>(null);
   const [chatStarted, setChatStarted] = useState(false);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   const firestore = useFirestore();
@@ -68,7 +68,7 @@ export default function ClientChatPage() {
     e.preventDefault();
     if (!phoneNumber.trim() || !brandId || !brandData) return;
 
-    setIsLoading(true);
+    setIsStartingChat(true);
     try {
       // 1. Find contact by phone number and brandId
       const contactsRef = collection(firestore, 'contacts');
@@ -149,7 +149,7 @@ export default function ClientChatPage() {
       console.error('Falha ao iniciar o chat', error);
       alert('Ocorreu um erro ao iniciar o chat. Tente novamente.');
     } finally {
-      setIsLoading(false);
+      setIsStartingChat(false);
     }
   };
 
@@ -184,7 +184,7 @@ export default function ClientChatPage() {
   }, [messages]);
 
   if (!chatStarted) {
-    const pageLoading = brandLoading || attendantLoading;
+    const pageLoading = brandLoading || attendantLoading || !brandData || !attendantData;
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
         {pageLoading ? (
@@ -211,8 +211,8 @@ export default function ClientChatPage() {
                 required
                 className="text-center text-lg"
               />
-              <Button type="submit" className="w-full !mt-6" size="lg" disabled={isLoading}>
-                {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Conversa'}
+              <Button type="submit" className="w-full !mt-6" size="lg" disabled={isStartingChat}>
+                {isStartingChat ? <Loader2 className="animate-spin" /> : 'Iniciar Conversa'}
               </Button>
             </form>
           </CardContent>

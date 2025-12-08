@@ -45,14 +45,6 @@ export default function ContactsPage() {
 
   const isLoading = userLoading || userDataLoading;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -80,7 +72,7 @@ export default function ContactsPage() {
         </div>
       </div>
       
-      {contactsLoading ? (
+      {isLoading || contactsLoading ? (
          <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>

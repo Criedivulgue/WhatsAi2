@@ -1,6 +1,6 @@
 'use client';
 
-import { doc, writeBatch, type Firestore, updateDoc } from 'firebase/firestore';
+import { doc, writeBatch, type Firestore, updateDoc, setDoc } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
@@ -67,9 +67,9 @@ export async function createBrandAndUser(
     softRules: softRules || '',
     ownerId: user.uid,
     aiConfig: {
-      autoSummarize,
-      autoEnrich,
-      autoFollowUp,
+      autoSummarize: autoSummarize || false,
+      autoEnrich: autoEnrich || false,
+      autoFollowUp: autoFollowUp || false,
     }
   });
 
@@ -102,7 +102,8 @@ export async function updateBrandData(
 ) {
   const brandRef = doc(firestore, 'brands', brandId);
   try {
-    await updateDoc(brandRef, data);
+    // Using set with merge:true is safer as it creates the doc if it doesn't exist
+    await setDoc(brandRef, data, { merge: true });
   }
   catch (serverError) {
       const permissionError = new FirestorePermissionError({

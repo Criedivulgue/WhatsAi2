@@ -52,7 +52,6 @@ const attendantSettingsSchema = z.object({
   attendantPersona: z.string().optional(),
 });
 
-// We don't need a schema for AI settings form as it's just switches
 const aiSettingsSchema = z.object({
   autoSummarize: z.boolean().default(true),
   autoEnrich: z.boolean().default(false),
@@ -73,7 +72,7 @@ export default function SettingsPage() {
 
 
   const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
-  const { data: userData, loading: userDataLoading } = useDoc<User>(userDocRef);
+  const { data: userData, loading: userDataLoading, setData: setUserData } = useDoc<User>(userDocRef);
 
   const brandDocRef = userData?.brandId
     ? doc(firestore, 'brands', userData.brandId)
@@ -106,12 +105,17 @@ export default function SettingsPage() {
         softRules: brandData.softRules,
         knowledgeBase: brandData.knowledgeBase,
       });
-      // Ensure aiConfig exists before trying to access its properties
       if (brandData.aiConfig) {
         aiForm.reset({
           autoSummarize: brandData.aiConfig.autoSummarize,
           autoEnrich: brandData.aiConfig.autoEnrich,
           autoFollowUp: brandData.aiConfig.autoFollowUp,
+        });
+      } else {
+        aiForm.reset({
+            autoSummarize: false,
+            autoEnrich: false,
+            autoFollowUp: false,
         });
       }
     }
@@ -157,6 +161,12 @@ export default function SettingsPage() {
     try {
       const downloadURL = await uploadAvatar(storage, user.uid, file);
       await updateUserProfile(firestore, user.uid, { avatarUrl: downloadURL });
+      
+      // Optimistically update local state for immediate feedback
+      if (userData) {
+          setUserData({...userData, avatarUrl: downloadURL});
+      }
+      
       toast({
         title: 'Avatar atualizado!',
         description: 'Sua nova foto de perfil foi salva.',
@@ -218,7 +228,7 @@ export default function SettingsPage() {
                   name="slogan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Slogan da Marca (Opcional)</FormLabel>
+                      <FormLabel>Slogan da Marca</FormLabel>
                       <FormControl>
                         <Input placeholder="Sua frase de efeito aqui" {...field} />
                       </FormControl>

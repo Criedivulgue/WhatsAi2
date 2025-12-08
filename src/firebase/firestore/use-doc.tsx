@@ -5,13 +5,17 @@ import {
   type DocumentReference,
   type DocumentData,
 } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
 export function useDoc<T extends DocumentData>(ref: DocumentReference<T> | null) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const updateData = useCallback((newData: T | null) => {
+    setData(newData);
+  }, []);
 
   useEffect(() => {
     if (!ref) {
@@ -23,7 +27,8 @@ export function useDoc<T extends DocumentData>(ref: DocumentReference<T> | null)
     const unsubscribe = onSnapshot(
       ref,
       (doc) => {
-        setData(doc.exists() ? doc.data() : null);
+        const docData = doc.exists() ? { ...doc.data(), id: doc.id } as T : null;
+        setData(docData);
         setLoading(false);
       },
       (serverError) => {
@@ -40,5 +45,5 @@ export function useDoc<T extends DocumentData>(ref: DocumentReference<T> | null)
     return () => unsubscribe();
   }, [ref]);
 
-  return { data, loading };
+  return { data, loading, setData: updateData };
 }

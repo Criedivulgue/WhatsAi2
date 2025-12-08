@@ -34,7 +34,7 @@
           "description": "The user ID of the attendant who owns the brand."
         }
       },
-      "required": ["brandName", "brandTone", "ownerId"]
+      "required": ["brandName", "slogan", "brandTone", "ownerId"]
     },
     "user": {
       "title": "User",

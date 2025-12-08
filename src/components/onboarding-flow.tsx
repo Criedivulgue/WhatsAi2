@@ -36,7 +36,7 @@ import { uploadAvatar } from '@/firebase/storage';
 
 const brandSchema = z.object({
   brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
-  slogan: z.string().optional(),
+  slogan: z.string().min(2, 'O slogan é obrigatório.'),
   brandTone: z.string().min(10, 'Por favor, descreva o tom da sua marca.'),
   knowledgeBase: z.string().optional(),
   hardRules: z.string().optional(),
@@ -143,7 +143,7 @@ export default function OnboardingFlow() {
 
   const prevStep = () => {
     if (step > 0) {
-      setStep(step - 1);
+      setStep(step + 1);
     }
   };
 
@@ -212,7 +212,7 @@ export default function OnboardingFlow() {
                     name="slogan"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Slogan da Marca (Opcional)</FormLabel>
+                        <FormLabel>Slogan da Marca</FormLabel>
                         <FormControl>
                           <Input placeholder="Sua frase de efeito aqui" {...field} />
                         </FormControl>

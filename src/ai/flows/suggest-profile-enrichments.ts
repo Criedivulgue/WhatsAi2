@@ -1,14 +1,14 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for suggesting profile enrichments based on chat content.
+ * @fileOverview Este arquivo define um fluxo Genkit para sugerir enriquecimentos de perfil com base no conteúdo do chat.
  *
- * The flow analyzes chat content to suggest new interests, adjusted contact categories,
- * opportunity insights, and internal notes to enrich contact profiles.
+ * O fluxo analisa o conteúdo do chat para sugerir novos interesses, categorias de contato ajustadas,
+ * insights de oportunidade e notas internas para enriquecer os perfis de contato.
  *
- * @exports suggestProfileEnrichments - The main function to trigger the profile enrichment suggestion flow.
- * @exports SuggestProfileEnrichmentsInput - The input type for the suggestProfileEnrichments function.
- * @exports SuggestProfileEnrichmentsOutput - The output type for the suggestProfileEnrichments function.
+ * @exports suggestProfileEnrichments - A função principal para acionar o fluxo de sugestão de enriquecimento de perfil.
+ * @exports SuggestProfileEnrichmentsInput - O tipo de entrada para a função suggestProfileEnrichments.
+ * @exports SuggestProfileEnrichmentsOutput - O tipo de saída para a função suggestProfileEnrichments.
  */
 
 import {ai} from '@/ai/genkit';
@@ -17,10 +17,10 @@ import {z} from 'genkit';
 const SuggestProfileEnrichmentsInputSchema = z.object({
   chatContent: z
     .string()
-    .describe('The content of the chat conversation to analyze.'),
-  currentInterests: z.array(z.string()).optional().describe('The contact\'s current interests.'),
-  currentCategories: z.array(z.string()).optional().describe('The contact\'s current categories.'),
-  existingNotes: z.string().optional().describe('Any existing internal notes about the contact.'),
+    .describe('O conteúdo da conversa do chat a ser analisado.'),
+  currentInterests: z.array(z.string()).optional().describe('Os interesses atuais do contato.'),
+  currentCategories: z.array(z.string()).optional().describe('As categorias atuais do contato.'),
+  existingNotes: z.string().optional().describe('Quaisquer notas internas existentes sobre o contato.'),
 });
 export type SuggestProfileEnrichmentsInput = z.infer<
   typeof SuggestProfileEnrichmentsInputSchema
@@ -29,14 +29,14 @@ export type SuggestProfileEnrichmentsInput = z.infer<
 const SuggestProfileEnrichmentsOutputSchema = z.object({
   suggestedInterests: z
     .array(z.string())
-    .describe('Suggested new interests for the contact.'),
+    .describe('Novos interesses sugeridos para o contato.'),
   adjustedCategories: z
     .array(z.string())
-    .describe('Suggested adjustments to the contact\'s categories.'),
+    .describe('Ajustes sugeridos para as categorias do contato.'),
   opportunityInsights: z
     .string()
-    .describe('Insights into potential opportunities related to the contact.'),
-  internalNotes: z.string().describe('Suggested internal notes about the contact.'),
+    .describe('Insights sobre oportunidades potenciais relacionadas ao contato.'),
+  internalNotes: z.string().describe('Notas internas sugeridas sobre o contato.'),
 });
 export type SuggestProfileEnrichmentsOutput = z.infer<
   typeof SuggestProfileEnrichmentsOutputSchema
@@ -52,19 +52,19 @@ const prompt = ai.definePrompt({
   name: 'suggestProfileEnrichmentsPrompt',
   input: {schema: SuggestProfileEnrichmentsInputSchema},
   output: {schema: SuggestProfileEnrichmentsOutputSchema},
-  prompt: `You are an AI assistant that analyzes chat content to suggest enrichments for contact profiles.
+  prompt: `Você é um assistente de IA que analisa o conteúdo do chat para sugerir enriquecimentos para perfis de contato.
 
-  Based on the following chat content, suggest new interests, adjusted contact categories, opportunity insights, and internal notes.
+  Com base no seguinte conteúdo do chat, sugira novos interesses, categorias de contato ajustadas, insights de oportunidade e notas internas.
 
-  Chat Content: {{{chatContent}}}
+  Conteúdo do Chat: {{{chatContent}}}
 
-  Current Interests: {{#if currentInterests}}{{#each currentInterests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
-  Current Categories: {{#if currentCategories}}{{#each currentCategories}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
-  Existing Notes: {{{existingNotes}}}
+  Interesses Atuais: {{#if currentInterests}}{{#each currentInterests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}Nenhum{{/if}}
+  Categorias Atuais: {{#if currentCategories}}{{#each currentCategories}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}Nenhuma{{/if}}
+  Anotações Existentes: {{{existingNotes}}}
 
-  Consider the contact's current interests, categories, and existing notes when making suggestions.
-  Provide clear and concise suggestions that can be easily implemented by the user.
-  Format the output as a JSON object with the following keys: suggestedInterests, adjustedCategories, opportunityInsights, and internalNotes.
+  Considere os interesses, categorias e anotações existentes do contato ao fazer sugestões.
+  Forneça sugestões claras e concisas que possam ser facilmente implementadas pelo usuário.
+  Formate a saída como um objeto JSON com as seguintes chaves: suggestedInterests, adjustedCategories, opportunityInsights e internalNotes.
   `,
 });
 

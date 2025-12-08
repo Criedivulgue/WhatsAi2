@@ -1,30 +1,30 @@
 // src/ai/flows/generate-follow-up-suggestions.ts
 'use server';
 /**
- * @fileOverview This file defines a Genkit flow for generating personalized follow-up suggestions, including email drafts,
- * WhatsApp messages, follow-up recommendations, and pre-created events for Google Calendar. It aims to streamline the
- * user's follow-up process by providing AI-driven suggestions tailored to the specific contact and conversation.
+ * @fileOverview Este arquivo define um fluxo Genkit para gerar sugestões de acompanhamento personalizadas, incluindo rascunhos de e-mail,
+ * mensagens de WhatsApp, recomendações de acompanhamento e eventos pré-criados para o Google Calendar. O objetivo é otimizar o processo
+ * de acompanhamento do usuário, fornecendo sugestões orientadas por IA, adaptadas ao contato e à conversa específicos.
  *
- * - generateFollowUpSuggestions - The main function that orchestrates the generation of follow-up suggestions.
- * - GenerateFollowUpSuggestionsInput - The input type for the generateFollowUpSuggestions function.
- * - GenerateFollowUpSuggestionsOutput - The output type for the generateFollowUpSuggestions function.
+ * - generateFollowUpSuggestions - A função principal que orquestra a geração de sugestões de acompanhamento.
+ * - GenerateFollowUpSuggestionsInput - O tipo de entrada para a função generateFollowUpSuggestions.
+ * - GenerateFollowUpSuggestionsOutput - O tipo de saída para a função generateFollowUpSuggestions.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateFollowUpSuggestionsInputSchema = z.object({
-  contactName: z.string().describe('The name of the contact to follow up with.'),
-  conversationSummary: z.string().describe('A summary of the previous conversation with the contact.'),
-  brandInformation: z.string().describe('Information about the user\u2019s brand, tone, and rules.'),
+  contactName: z.string().describe('O nome do contato para acompanhamento.'),
+  conversationSummary: z.string().describe('Um resumo da conversa anterior com o contato.'),
+  brandInformation: z.string().describe('Informações sobre a marca, tom e regras do usuário.'),
 });
 export type GenerateFollowUpSuggestionsInput = z.infer<typeof GenerateFollowUpSuggestionsInputSchema>;
 
 const GenerateFollowUpSuggestionsOutputSchema = z.object({
-  emailDraft: z.string().describe('A draft email for following up with the contact.'),
-  whatsAppMessage: z.string().describe('A suggested WhatsApp message for following up with the contact.'),
-  followUpRecommendation: z.string().describe('A recommendation for the next steps to take with the contact.'),
-  calendarEventSuggestion: z.string().describe('A suggestion for a pre-created event for Google Calendar, including date, time, and agenda.'),
+  emailDraft: z.string().describe('Um rascunho de e-mail para acompanhamento com o contato.'),
+  whatsAppMessage: z.string().describe('Uma mensagem de WhatsApp sugerida para acompanhamento com o contato.'),
+  followUpRecommendation: z.string().describe('Uma recomendação para os próximos passos a serem tomados com o contato.'),
+  calendarEventSuggestion: z.string().describe('Uma sugestão de evento pré-criado para o Google Calendar, incluindo data, hora e pauta.'),
 });
 export type GenerateFollowUpSuggestionsOutput = z.infer<typeof GenerateFollowUpSuggestionsOutputSchema>;
 
@@ -38,20 +38,20 @@ const prompt = ai.definePrompt({
   name: 'generateFollowUpSuggestionsPrompt',
   input: {schema: GenerateFollowUpSuggestionsInputSchema},
   output: {schema: GenerateFollowUpSuggestionsOutputSchema},
-  prompt: `You are an AI assistant helping users to streamline their follow-up process with contacts.
+  prompt: `Você é um assistente de IA que ajuda os usuários a otimizar o processo de acompanhamento com os contatos.
 
-  Based on the contact's name, a summary of the previous conversation, and the brand's information, generate personalized follow-up suggestions.
+  Com base no nome do contato, um resumo da conversa anterior e as informações da marca, gere sugestões de acompanhamento personalizadas.
 
-  Contact Name: {{{contactName}}}
-  Conversation Summary: {{{conversationSummary}}}
-  Brand Information: {{{brandInformation}}}
+  Nome do Contato: {{{contactName}}}
+  Resumo da Conversa: {{{conversationSummary}}}
+  Informações da Marca: {{{brandInformation}}}
 
-  Consider the brand’s tone and rules when crafting the email draft and WhatsApp message. Provide a clear and concise follow-up recommendation.
-  Suggest a pre-created event for Google Calendar, including date, time, and agenda, to facilitate the follow-up process.
+  Considere o tom e as regras da marca ao redigir o rascunho do e-mail and a mensagem do WhatsApp. Forneça uma recomendação de acompanhamento clara e concisa.
+  Sugira um evento pré-criado para o Google Calendar, incluindo data, hora e pauta, para facilitar o processo de acompanhamento.
 
-  Ensure that the suggestions are tailored to the contact and the conversation, and that they align with the brand's guidelines.
+  Garanta que as sugestões sejam adaptadas ao contato e à conversa e que estejam alinhadas com as diretrizes da marca.
 
-  Output in JSON format:
+  Saída em formato JSON:
   {
     "emailDraft": "",
     "whatsAppMessage": "",

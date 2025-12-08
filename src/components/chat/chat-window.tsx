@@ -40,7 +40,7 @@ export function ChatWindow({ chat }: ChatWindowProps) {
         ...messages,
         {
           id: messages.length + 1,
-          name: 'Attendant',
+          name: 'Atendente',
           message: input,
           avatar: 'avatar-1'
         },
@@ -57,7 +57,7 @@ export function ChatWindow({ chat }: ChatWindowProps) {
       <div ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((message, index) => {
            const avatarData = PlaceHolderImages.find(p => p.id === message.avatar);
-           const isUser = message.name === 'Attendant';
+           const isUser = message.name === 'Atendente';
           return (
             <div
               key={index}
@@ -89,7 +89,7 @@ export function ChatWindow({ chat }: ChatWindowProps) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
+            placeholder="Digite uma mensagem..."
             className="pr-12"
           />
           <Button

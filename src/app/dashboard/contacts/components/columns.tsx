@@ -15,14 +15,14 @@ export const columns: ColumnDef<Contact>[] = [
       <Checkbox
         checked={table.getIsAllPageRowsSelected()}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
+        aria-label="Selecionar tudo"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
+        aria-label="Selecionar linha"
       />
     ),
     enableSorting: false,
@@ -30,7 +30,7 @@ export const columns: ColumnDef<Contact>[] = [
   },
   {
     accessorKey: 'name',
-    header: 'Name',
+    header: 'Nome',
     cell: ({ row }) => {
       const contact = row.original;
       const avatar = PlaceHolderImages.find((p) => p.id === contact.avatar);
@@ -50,7 +50,7 @@ export const columns: ColumnDef<Contact>[] = [
   },
   {
     accessorKey: 'phone',
-    header: 'Phone',
+    header: 'Telefone',
   },
   {
     accessorKey: 'status',
@@ -58,9 +58,9 @@ export const columns: ColumnDef<Contact>[] = [
     cell: ({ row }) => {
       const status = row.original.status;
       const variant = {
-        'Active': 'default',
-        'New': 'secondary',
-        'Blocked': 'destructive',
+        'Ativo': 'default',
+        'Novo': 'secondary',
+        'Bloqueado': 'destructive',
       }[status] || 'outline';
       
       return <Badge variant={variant as any}>{status}</Badge>;
@@ -68,7 +68,7 @@ export const columns: ColumnDef<Contact>[] = [
   },
   {
     accessorKey: 'categories',
-    header: 'Categories',
+    header: 'Categorias',
     cell: ({ row }) => {
       const categories = row.original.categories;
       return (

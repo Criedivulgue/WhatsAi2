@@ -5,10 +5,10 @@ import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'WhatsAi',
-  description: 'The All-in-One AI-Powered Chat and Contact Management Platform',
+  description: 'A plataforma completa de gerenciamento de contatos e bate-papo com tecnologia de IA',
   openGraph: {
     title: 'WhatsAi',
-    description: 'The All-in-One AI-Powered Chat and Contact Management Platform',
+    description: 'A plataforma completa de gerenciamento de contatos e bate-papo com tecnologia de IA',
     url: 'https://whatsai.app',
     siteName: 'WhatsAi',
     images: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
         height: 630,
       },
     ],
-    locale: 'en_US',
+    locale: 'pt_BR',
     type: 'website',
   },
 };
@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

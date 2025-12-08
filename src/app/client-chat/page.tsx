@@ -38,12 +38,12 @@ export default function ClientChatPage() {
         ]);
         setChatStarted(true);
       } catch (error) {
-        console.error('Failed to get initial greeting', error);
+        console.error('Falha ao obter saudação inicial', error);
         setMessages([
           {
             id: 1,
             role: 'assistant',
-            content: 'Hello! How can I help you today?',
+            content: 'Olá! Como posso ajudar você hoje?',
           },
         ]);
         setChatStarted(true);
@@ -63,12 +63,12 @@ export default function ClientChatPage() {
       };
       setMessages((prev) => [...prev, newUserMessage]);
       setInput('');
-      // Simulate assistant response
+      // Simular resposta do assistente
       setTimeout(() => {
         const assistantResponse: Message = {
           id: messages.length + 2,
           role: 'assistant',
-          content: 'Thank you for your message. An attendant will be with you shortly.',
+          content: 'Obrigado pela sua mensagem. Um atendente estará com você em breve.',
         };
         setMessages((prev) => [...prev, assistantResponse]);
       }, 1000);
@@ -86,21 +86,21 @@ export default function ClientChatPage() {
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader>
-            <CardTitle className="text-center text-2xl">Welcome to our Chat</CardTitle>
+            <CardTitle className="text-center text-2xl">Bem-vindo ao nosso Chat</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleStartChat} className="space-y-4">
-              <p className="text-center text-muted-foreground">Please enter your phone number to begin.</p>
+              <p className="text-center text-muted-foreground">Por favor, insira seu número de telefone para começar.</p>
               <Input
                 type="tel"
-                placeholder="Your phone number"
+                placeholder="Seu número de telefone"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 required
                 className="text-center"
               />
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="animate-spin" /> : 'Start Chat'}
+                {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Chat'}
               </Button>
             </form>
           </CardContent>
@@ -113,14 +113,14 @@ export default function ClientChatPage() {
     <div className="flex h-screen flex-col bg-background">
       <header className="flex items-center gap-4 border-b bg-card p-4">
         <Avatar>
-          <AvatarImage src="https://picsum.photos/seed/brandlogo/40/40" data-ai-hint="logo abstract" />
+          <AvatarImage src="https://picsum.photos/seed/brandlogo/40/40" data-ai-hint="logo abstrato" />
           <AvatarFallback>
             <Bot />
           </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-lg font-semibold">Brand Support</h2>
-          <p className="text-sm text-muted-foreground">We're here to help</p>
+          <h2 className="text-lg font-semibold">Suporte da Marca</h2>
+          <p className="text-sm text-muted-foreground">Estamos aqui para ajudar</p>
         </div>
       </header>
 
@@ -160,7 +160,7 @@ export default function ClientChatPage() {
       <footer className="border-t bg-card p-4">
         <form onSubmit={handleSendMessage} className="relative">
           <Input
-            placeholder="Type your message..."
+            placeholder="Digite sua mensagem..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="pr-12"

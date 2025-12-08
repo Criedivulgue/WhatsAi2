@@ -3,7 +3,7 @@ export type Contact = {
   name: string;
   email: string;
   phone: string;
-  status: 'Active' | 'New' | 'Blocked';
+  status: 'Ativo' | 'Novo' | 'Bloqueado';
   avatar: string;
   categories: string[];
   interests: string[];

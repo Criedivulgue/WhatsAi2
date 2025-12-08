@@ -30,14 +30,14 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 
 const brandSchema = z.object({
-  brandName: z.string().min(2, 'Brand name must be at least 2 characters.'),
-  brandTone: z.string().min(10, 'Please describe your brand tone.'),
+  brandName: z.string().min(2, 'O nome da marca deve ter pelo menos 2 caracteres.'),
+  brandTone: z.string().min(10, 'Por favor, descreva o tom da sua marca.'),
   brandRules: z.string().optional(),
 });
 
 const detailsSchema = z.object({
-  attendantName: z.string().min(2, 'Your name is required.'),
-  attendantEmail: z.string().email('Invalid email address.'),
+  attendantName: z.string().min(2, 'Seu nome é obrigatório.'),
+  attendantEmail: z.string().email('Endereço de e-mail inválido.'),
 });
 
 const aiConfigSchema = z.object({
@@ -89,8 +89,8 @@ export default function OnboardingFlow() {
   };
 
   const onSubmit = (data: OnboardingFormValues) => {
-    console.log('Onboarding data:', data);
-    // Here you would typically save the data to your backend
+    console.log('Dados de integração:', data);
+    // Aqui você normalmente salvaria os dados no seu backend
     router.push('/dashboard');
   };
 
@@ -107,8 +107,8 @@ export default function OnboardingFlow() {
                     <Logo className="h-8 w-8 text-primary-foreground" />
                  </div>
                  <div>
-                    <CardTitle className="text-2xl">Welcome to WhatsAi</CardTitle>
-                    <CardDescription>Let's get your workspace set up.</CardDescription>
+                    <CardTitle className="text-2xl">Bem-vindo ao WhatsAi</CardTitle>
+                    <CardDescription>Vamos configurar seu espaço de trabalho.</CardDescription>
                  </div>
               </div>
               <Progress value={progressValue} className="w-full" />
@@ -116,15 +116,15 @@ export default function OnboardingFlow() {
             <CardContent>
               {step === 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Brand Information</h3>
+                  <h3 className="text-lg font-semibold">Informações da Marca</h3>
                   <FormField
                     control={methods.control}
                     name="brandName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Brand Name</FormLabel>
+                        <FormLabel>Nome da Marca</FormLabel>
                         <FormControl>
-                          <Input placeholder="Your Company" {...field} />
+                          <Input placeholder="Sua Empresa" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -135,9 +135,9 @@ export default function OnboardingFlow() {
                     name="brandTone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Brand Tone & Voice</FormLabel>
+                        <FormLabel>Tom e Voz da Marca</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g., Friendly and professional, use emojis sparingly..." {...field} />
+                          <Textarea placeholder="ex: Amigável e profissional, use emojis com moderação..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -148,9 +148,9 @@ export default function OnboardingFlow() {
                     name="brandRules"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Specific Rules (Optional)</FormLabel>
+                        <FormLabel>Regras Específicas (Opcional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g., Never offer discounts, always greet by name..." {...field} />
+                          <Textarea placeholder="ex: Nunca oferecer descontos, sempre cumprimentar pelo nome..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -160,13 +160,13 @@ export default function OnboardingFlow() {
               )}
               {step === 1 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Your Details</h3>
+                  <h3 className="text-lg font-semibold">Seus Detalhes</h3>
                   <FormField
                     control={methods.control}
                     name="attendantName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Your Name</FormLabel>
+                        <FormLabel>Seu Nome</FormLabel>
                         <FormControl>
                           <Input placeholder="John Doe" {...field} />
                         </FormControl>
@@ -179,9 +179,9 @@ export default function OnboardingFlow() {
                     name="attendantEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Your Email</FormLabel>
+                        <FormLabel>Seu Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="you@company.com" {...field} />
+                          <Input type="email" placeholder="voce@empresa.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -191,15 +191,15 @@ export default function OnboardingFlow() {
               )}
               {step === 2 && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold">AI Configuration</h3>
+                  <h3 className="text-lg font-semibold">Configuração da IA</h3>
                   <FormField
                     control={methods.control}
                     name="autoSummarize"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel>Auto-Summarize Chats</FormLabel>
-                          <CardDescription>Automatically generate a summary when a chat ends.</CardDescription>
+                          <FormLabel>Resumir Chats Automaticamente</FormLabel>
+                          <CardDescription>Gerar automaticamente um resumo quando um chat termina.</CardDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -216,8 +216,8 @@ export default function OnboardingFlow() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel>Suggest Profile Enrichments</FormLabel>
-                           <CardDescription>Let AI suggest new interests and categories for contacts.</CardDescription>
+                          <FormLabel>Sugerir Enriquecimento de Perfil</FormLabel>
+                           <CardDescription>Deixe a IA sugerir novos interesses e categorias para contatos.</CardDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -234,8 +234,8 @@ export default function OnboardingFlow() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel>Generate Follow-up Ideas</FormLabel>
-                          <CardDescription>AI will draft follow-up emails and messages for you.</CardDescription>
+                          <FormLabel>Gerar Ideias de Acompanhamento</FormLabel>
+                          <CardDescription>A IA irá redigir e-mails e mensagens de acompanhamento para você.</CardDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -252,15 +252,15 @@ export default function OnboardingFlow() {
             <CardFooter className="flex justify-between">
               {step > 0 && (
                 <Button variant="outline" onClick={prevStep} type="button">
-                  Back
+                  Voltar
                 </Button>
               )}
               {step < formSchemas.length - 1 ? (
                 <Button onClick={nextStep} type="button" className={step === 0 ? 'ml-auto' : ''}>
-                  Next
+                  Próximo
                 </Button>
               ) : (
-                <Button type="submit">Finish Setup</Button>
+                <Button type="submit">Finalizar Configuração</Button>
               )}
             </CardFooter>
           </Card>

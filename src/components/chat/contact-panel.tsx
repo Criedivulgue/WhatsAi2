@@ -68,7 +68,7 @@ export function ContactPanel({ chat }: ContactPanelProps) {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-center border-b bg-card p-4">
-        <h2 className="text-xl font-bold">Contact Profile</h2>
+        <h2 className="text-xl font-bold">Perfil do Contato</h2>
       </header>
       <ScrollArea className="flex-1">
         <div className="p-4">
@@ -93,7 +93,7 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                   <Badge>{contact.status}</Badge>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Categories</h4>
+                  <h4 className="font-semibold text-sm">Categorias</h4>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {contact.categories.map((cat) => (
                       <Badge key={cat} variant="secondary">
@@ -103,7 +103,7 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Interests</h4>
+                  <h4 className="font-semibold text-sm">Interesses</h4>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {contact.interests.map((interest) => (
                       <Badge key={interest} variant="outline">
@@ -114,7 +114,7 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                 </div>
                 <Separator />
                 <div>
-                  <h4 className="font-semibold text-sm">Internal Notes</h4>
+                  <h4 className="font-semibold text-sm">Anotações Internas</h4>
                   <p className="text-sm text-muted-foreground mt-1">
                     {contact.notes}
                   </p>
@@ -147,8 +147,8 @@ function AiTools({ chat }: { chat: Chat }) {
       if (key === 'followUps') setFollowUps(result);
     } catch (error) {
       toast({
-        title: 'AI Error',
-        description: `Failed to generate ${key}.`,
+        title: 'Erro de IA',
+        description: `Falha ao gerar ${key}.`,
         variant: 'destructive',
       });
       console.error(error);
@@ -157,12 +157,12 @@ function AiTools({ chat }: { chat: Chat }) {
     }
   };
 
-  const brandInfo = "My brand is friendly, professional, and helpful. We use emojis occasionally but avoid slang. All communication should be clear and concise.";
+  const brandInfo = "Minha marca é amigável, profissional e prestativa. Usamos emojis ocasionalmente, mas evitamos gírias. Toda a comunicação deve ser clara e concisa.";
 
   const enrichmentSuggestions = enrichments
     ? [
-        ...enrichments.suggestedInterests.map((i) => ({ type: 'Interest', value: i })),
-        ...enrichments.adjustedCategories.map((c) => ({ type: 'Category', value: c })),
+        ...enrichments.suggestedInterests.map((i) => ({ type: 'Interesse', value: i })),
+        ...enrichments.adjustedCategories.map((c) => ({ type: 'Categoria', value: c })),
       ]
     : [];
 
@@ -171,23 +171,23 @@ function AiTools({ chat }: { chat: Chat }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot />
-          AI Assistant Tools
+          Ferramentas do Assistente de IA
         </CardTitle>
         <CardDescription>
-          Use AI to analyze this conversation and get insights.
+          Use a IA para analisar esta conversa e obter insights.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="summary">
-              <Workflow className="mr-2 h-4 w-4" /> Summary
+              <Workflow className="mr-2 h-4 w-4" /> Resumo
             </TabsTrigger>
             <TabsTrigger value="enrichments">
-              <BrainCircuit className="mr-2 h-4 w-4" /> Enrich
+              <BrainCircuit className="mr-2 h-4 w-4" /> Enriquecer
             </TabsTrigger>
             <TabsTrigger value="follow-ups">
-              <Sparkles className="mr-2 h-4 w-4" /> Follow-up
+              <Sparkles className="mr-2 h-4 w-4" /> Acompanhamento
             </TabsTrigger>
           </TabsList>
 
@@ -197,14 +197,14 @@ function AiTools({ chat }: { chat: Chat }) {
               disabled={isLoading.summary}
               className="w-full"
             >
-              {isLoading.summary ? <Loader2 className="animate-spin" /> : 'Generate Summary'}
+              {isLoading.summary ? <Loader2 className="animate-spin" /> : 'Gerar Resumo'}
             </Button>
             {summary && (
               <div className="space-y-4 rounded-md border p-4">
-                <h4 className="font-semibold">Conversation Summary</h4>
+                <h4 className="font-semibold">Resumo da Conversa</h4>
                 <p className="text-sm text-muted-foreground">{summary.summary}</p>
                 <Separator />
-                <h4 className="font-semibold">Action Items</h4>
+                <h4 className="font-semibold">Itens de Ação</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                   {summary.actionItems.map((item, i) => <li key={i}>{item}</li>)}
                 </ul>
@@ -218,18 +218,18 @@ function AiTools({ chat }: { chat: Chat }) {
               disabled={isLoading.enrichments}
               className="w-full"
             >
-              {isLoading.enrichments ? <Loader2 className="animate-spin" /> : 'Suggest Enrichments'}
+              {isLoading.enrichments ? <Loader2 className="animate-spin" /> : 'Sugerir Enriquecimentos'}
             </Button>
             {enrichments && (
               <div className="space-y-4 rounded-md border p-4">
                 {enrichmentSuggestions.length > 0 && (
                   <>
-                    <h4 className="font-semibold">Suggested Updates</h4>
+                    <h4 className="font-semibold">Atualizações Sugeridas</h4>
                     <div className="space-y-2">
                       {enrichmentSuggestions.map((s, i) => (
                         <div key={i} className="flex items-center justify-between rounded-md bg-muted/50 p-2 text-sm">
                           <span>
-                            New {s.type}: <strong>{s.value}</strong>
+                            Novo {s.type}: <strong>{s.value}</strong>
                           </span>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-7 w-7"><ThumbsUp className="h-4 w-4 text-green-500" /></Button>
@@ -242,10 +242,10 @@ function AiTools({ chat }: { chat: Chat }) {
                   </>
                 )}
                 
-                <h4 className="font-semibold">Opportunity Insights</h4>
+                <h4 className="font-semibold">Insights de Oportunidade</h4>
                 <p className="text-sm text-muted-foreground">{enrichments.opportunityInsights}</p>
                 <Separator />
-                <h4 className="font-semibold">Suggested Internal Notes</h4>
+                <h4 className="font-semibold">Anotações Internas Sugeridas</h4>
                 <p className="text-sm text-muted-foreground">{enrichments.internalNotes}</p>
               </div>
             )}
@@ -257,23 +257,23 @@ function AiTools({ chat }: { chat: Chat }) {
               disabled={isLoading.followUps}
               className="w-full"
             >
-              {isLoading.followUps ? <Loader2 className="animate-spin" /> : 'Generate Follow-ups'}
+              {isLoading.followUps ? <Loader2 className="animate-spin" /> : 'Gerar Acompanhamentos'}
             </Button>
             {followUps && (
                <div className="space-y-4 rounded-md border p-4">
-                  <h4 className="font-semibold">Follow-up Recommendation</h4>
+                  <h4 className="font-semibold">Recomendação de Acompanhamento</h4>
                   <p className="text-sm text-muted-foreground">{followUps.followUpRecommendation}</p>
                   <Separator />
-                  <h4 className="font-semibold">Suggested Messages</h4>
+                  <h4 className="font-semibold">Mensagens Sugeridas</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <Sheet>
                       <SheetTrigger asChild>
                         <Button variant="outline"><Mail className="mr-2 h-4 w-4"/> Email</Button>
                       </SheetTrigger>
                       <SheetContent>
-                        <SheetHeader><SheetTitle>Email Draft</SheetTitle></SheetHeader>
+                        <SheetHeader><SheetTitle>Rascunho de Email</SheetTitle></SheetHeader>
                         <Textarea defaultValue={followUps.emailDraft} className="h-64 mt-4" />
-                        <Button className="mt-4"><Clipboard className="mr-2 h-4 w-4"/> Copy</Button>
+                        <Button className="mt-4"><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
                       </SheetContent>
                     </Sheet>
                      <Sheet>
@@ -281,14 +281,14 @@ function AiTools({ chat }: { chat: Chat }) {
                         <Button variant="outline"><MessageSquare className="mr-2 h-4 w-4"/> WhatsApp</Button>
                       </SheetTrigger>
                       <SheetContent>
-                        <SheetHeader><SheetTitle>WhatsApp Message</SheetTitle></SheetHeader>
+                        <SheetHeader><SheetTitle>Mensagem de WhatsApp</SheetTitle></SheetHeader>
                         <Textarea defaultValue={followUps.whatsAppMessage} className="h-64 mt-4" />
-                        <Button className="mt-4"><Clipboard className="mr-2 h-4 w-4"/> Copy</Button>
+                        <Button className="mt-4"><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
                       </SheetContent>
                     </Sheet>
                   </div>
                   <Separator />
-                  <h4 className="font-semibold">Calendar Event Suggestion</h4>
+                  <h4 className="font-semibold">Sugestão de Evento no Calendário</h4>
                   <p className="text-sm text-muted-foreground">{followUps.calendarEventSuggestion}</p>
                </div>
             )}

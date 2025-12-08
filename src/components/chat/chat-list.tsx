@@ -39,7 +39,7 @@ export function ChatList({
         <div className={cn('relative mt-4', isCollapsed && 'mt-0')}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search"
+            placeholder="Buscar"
             className={cn('pl-9', isCollapsed && 'hidden')}
           />
         </div>

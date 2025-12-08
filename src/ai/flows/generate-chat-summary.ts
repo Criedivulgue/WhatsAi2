@@ -1,11 +1,11 @@
 'use server';
 
 /**
- * @fileOverview A flow to generate a structured summary of a chat conversation.
+ * @fileOverview Um fluxo para gerar um resumo estruturado de uma conversa de chat.
  *
- * - generateChatSummary - A function that generates the chat summary.
- * - GenerateChatSummaryInput - The input type for the generateChatSummary function.
- * - GenerateChatSummaryOutput - The return type for the generateChatSummary function.
+ * - generateChatSummary - Uma função que gera o resumo do chat.
+ * - GenerateChatSummaryInput - O tipo de entrada para a função generateChatSummary.
+ * - GenerateChatSummaryOutput - O tipo de retorno para a função generateChatSummary.
  */
 
 import {ai} from '@/ai/genkit';
@@ -14,13 +14,13 @@ import {z} from 'genkit';
 const GenerateChatSummaryInputSchema = z.object({
   conversationText: z
     .string()
-    .describe('The complete text of the chat conversation to summarize.'),
+    .describe('O texto completo da conversa do chat a ser resumido.'),
 });
 export type GenerateChatSummaryInput = z.infer<typeof GenerateChatSummaryInputSchema>;
 
 const GenerateChatSummaryOutputSchema = z.object({
-  summary: z.string().describe('A structured summary of the chat conversation.'),
-  actionItems: z.array(z.string()).describe('A list of action items extracted from the conversation.'),
+  summary: z.string().describe('Um resumo estruturado da conversa do chat.'),
+  actionItems: z.array(z.string()).describe('Uma lista de itens de ação extraídos da conversa.'),
 });
 export type GenerateChatSummaryOutput = z.infer<typeof GenerateChatSummaryOutputSchema>;
 
@@ -32,12 +32,12 @@ const prompt = ai.definePrompt({
   name: 'generateChatSummaryPrompt',
   input: {schema: GenerateChatSummaryInputSchema},
   output: {schema: GenerateChatSummaryOutputSchema},
-  prompt: `You are an AI assistant tasked with summarizing chat conversations and extracting action items.
+  prompt: `Você é um assistente de IA encarregado de resumir conversas de chat e extrair itens de ação.
 
-  Summarize the following conversation:
+  Resuma a seguinte conversa:
   {{conversationText}}
 
-  Provide a structured summary of the conversation, including key points and decisions made.  Also, extract a list of action items that need to be completed.  Return the summary and action items in the format specified by the output schema.  The actionItems field should be a list of strings.
+  Forneça um resumo estruturado da conversa, incluindo pontos-chave e decisões tomadas. Além disso, extraia uma lista de itens de ação que precisam ser concluídos. Retorne o resumo e os itens de ação no formato especificado pelo esquema de saída. O campo actionItems deve ser uma lista de strings.
   `,
 });
 

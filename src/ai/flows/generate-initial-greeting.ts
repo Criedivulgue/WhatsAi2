@@ -14,7 +14,7 @@ import {z} from 'genkit';
 const GenerateInitialGreetingInputSchema = z.object({
   clientPhoneNumber: z
     .string()
-    .describe('The phone number of the client entering the PWA chat.'),
+    .describe('O número de telefone do cliente que entra no chat do PWA.'),
 });
 
 export type GenerateInitialGreetingInput = z.infer<
@@ -22,7 +22,7 @@ export type GenerateInitialGreetingInput = z.infer<
 >;
 
 const GenerateInitialGreetingOutputSchema = z.object({
-  greeting: z.string().describe('The AI-generated initial greeting message.'),
+  greeting: z.string().describe('A mensagem de saudação inicial gerada pela IA.'),
 });
 
 export type GenerateInitialGreetingOutput = z.infer<
@@ -39,13 +39,13 @@ const initialGreetingPrompt = ai.definePrompt({
   name: 'initialGreetingPrompt',
   input: {schema: GenerateInitialGreetingInputSchema},
   output: {schema: GenerateInitialGreetingOutputSchema},
-  prompt: `You are an AI assistant welcoming a new client to a chat application.
+  prompt: `Você é um assistente de IA dando as boas-vindas a um novo cliente em um aplicativo de chat.
 
-  The client's phone number is {{{clientPhoneNumber}}}.
+  O número de telefone do cliente é {{{clientPhoneNumber}}}.
 
-  Generate a brief and friendly greeting message explaining how to interact with the chat system.  Keep the greeting concise, under 50 words.
-  Be conversational and helpful.
-  Indicate you are an AI assistant.`,
+  Gere uma mensagem de saudação breve e amigável explicando como interagir com o sistema de chat. Mantenha a saudação concisa, com menos de 50 palavras.
+  Seja conversacional e prestativo.
+  Indique que você é um assistente de IA.`,
 });
 
 const generateInitialGreetingFlow = ai.defineFlow(

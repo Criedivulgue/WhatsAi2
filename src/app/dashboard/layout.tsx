@@ -24,7 +24,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const navItems = [
   { href: '/dashboard', icon: MessageSquare, label: 'Chat' },
-  { href: '/dashboard/contacts', icon: Users, label: 'Contacts' },
+  { href: '/dashboard/contacts', icon: Users, label: 'Contatos' },
 ];
 
 export default function DashboardLayout({
@@ -71,13 +71,13 @@ export default function DashboardLayout({
               variant="ghost"
               size="icon"
               className="mt-auto rounded-lg"
-              aria-label="Settings"
+              aria-label="Configurações"
             >
               <Settings className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right" sideOffset={5}>
-            Settings
+            Configurações
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -87,7 +87,7 @@ export default function DashboardLayout({
               variant="ghost"
               size="icon"
               className="rounded-lg"
-              aria-label="Logout"
+              aria-label="Sair"
             >
               <Link href="/">
                 <LogOut className="size-5" />
@@ -95,7 +95,7 @@ export default function DashboardLayout({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right" sideOffset={5}>
-            Logout
+            Sair
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -120,7 +120,7 @@ export default function DashboardLayout({
             <SheetTrigger asChild>
               <Button size="icon" variant="outline" className="sm:hidden">
                 <PanelLeft className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
+                <span className="sr-only">Alternar Menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs">
@@ -150,7 +150,7 @@ export default function DashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="relative ml-auto flex-1 md:grow-0">
-             {/* Can add a search bar here later */}
+             {/* Pode adicionar uma barra de pesquisa aqui mais tarde */}
           </div>
            <Avatar>
             <AvatarImage src={userAvatar.imageUrl} alt="User avatar" data-ai-hint={userAvatar.imageHint} />

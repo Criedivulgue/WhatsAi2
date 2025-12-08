@@ -31,18 +31,18 @@ export function DataTableRowActions<TData>({
           className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
         >
           <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">Abrir menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={() => toast({ title: `Editing ${contact.name}... (Not implemented)`})}>
+        <DropdownMenuItem onClick={() => toast({ title: `Editando ${contact.name}... (Não implementado)`})}>
           <Pencil className="mr-2 h-4 w-4" />
-          Edit
+          Editar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => toast({ title: `Deleting ${contact.name}... (Not implemented)`, variant: 'destructive'})}>
+        <DropdownMenuItem onClick={() => toast({ title: `Deletando ${contact.name}... (Não implementado)`, variant: 'destructive'})}>
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          Deletar
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

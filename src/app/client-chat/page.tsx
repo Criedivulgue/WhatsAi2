@@ -5,76 +5,143 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useCollection, useFirestore } from '@/firebase';
+import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import {
+  addDoc,
+  collection,
+  doc,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { ArrowUp, Bot, Loader2, User } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-
-type Message = {
-  id: number;
-  role: 'user' | 'assistant';
-  content: string;
-};
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function ClientChatPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [contactId, setContactId] = useState<string | null>(null);
+  const [brandId, setBrandId] = useState<string | null>(null);
   const [chatStarted, setChatStarted] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const firestore = useFirestore();
+
+  const messagesQuery = useMemo(() => {
+    if (!chatId) return null;
+    return query(
+      collection(firestore, 'chats', chatId, 'messages'),
+      orderBy('timestamp', 'asc')
+    );
+  }, [chatId, firestore]);
+
+  const { data: messages } = useCollection<Message>(messagesQuery);
 
   const handleStartChat = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phoneNumber.trim()) {
-      setIsLoading(true);
-      try {
-        const response = await getInitialGreetingAction(phoneNumber);
-        setMessages([
-          {
-            id: 1,
-            role: 'assistant',
-            content: response.greeting,
-          },
-        ]);
-        setChatStarted(true);
-      } catch (error) {
-        console.error('Falha ao obter saudação inicial', error);
-        setMessages([
-          {
-            id: 1,
-            role: 'assistant',
-            content: 'Olá! Como posso ajudar você hoje?',
-          },
-        ]);
-        setChatStarted(true);
-      } finally {
+    if (!phoneNumber.trim()) return;
+
+    setIsLoading(true);
+    try {
+      // 1. Find contact by phone number
+      const contactsRef = collection(firestore, 'contacts');
+      const q = query(contactsRef, where('phone', '==', phoneNumber.trim()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        // This is a simplified flow. In a real app, you might create a new contact.
+        alert('Número de telefone não encontrado.');
         setIsLoading(false);
+        return;
       }
+      
+      const contactDoc = querySnapshot.docs[0];
+      const contact = { id: contactDoc.id, ...contactDoc.data() };
+      setContactId(contact.id);
+      setBrandId(contact.brandId);
+
+      // 2. Check for an existing active chat
+      const chatsRef = collection(firestore, 'chats');
+      const chatQuery = query(
+        chatsRef,
+        where('contactId', '==', contact.id),
+        where('status', 'in', ['Active', 'Awaiting Return'])
+      );
+      const chatSnapshot = await getDocs(chatQuery);
+      
+      let currentChatId = '';
+
+      if (!chatSnapshot.empty) {
+        // 2a. Use existing chat
+        currentChatId = chatSnapshot.docs[0].id;
+      } else {
+        // 2b. Create a new chat
+        const newChatRef = doc(collection(firestore, 'chats'));
+        const initialGreeting = await getInitialGreetingAction(phoneNumber);
+        
+        await setDoc(newChatRef, {
+          contactId: contact.id,
+          brandId: contact.brandId,
+          status: 'Active',
+          lastMessageTimestamp: serverTimestamp(),
+          lastMessageContent: initialGreeting.greeting,
+        });
+
+        currentChatId = newChatRef.id;
+
+        // Add the initial greeting message
+        const messagesRef = collection(firestore, 'chats', currentChatId, 'messages');
+        await addDoc(messagesRef, {
+            sender: 'ai',
+            senderId: 'ai-assistant',
+            content: initialGreeting.greeting,
+            timestamp: Timestamp.now()
+        });
+      }
+      
+      setChatId(currentChatId);
+      setChatStarted(true);
+
+    } catch (error) {
+      console.error('Falha ao iniciar o chat', error);
+      alert('Ocorreu um erro ao iniciar o chat. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim()) {
-      const newUserMessage: Message = {
-        id: messages.length + 1,
-        role: 'user',
-        content: input,
-      };
-      setMessages((prev) => [...prev, newUserMessage]);
-      setInput('');
-      // Simular resposta do assistente
-      setTimeout(() => {
-        const assistantResponse: Message = {
-          id: messages.length + 2,
-          role: 'assistant',
-          content: 'Obrigado pela sua mensagem. Um atendente estará com você em breve.',
-        };
-        setMessages((prev) => [...prev, assistantResponse]);
-      }, 1000);
-    }
+    if (!input.trim() || !contactId || !chatId) return;
+
+    const newMessage: Omit<Message, 'id'> = {
+      sender: 'user',
+      senderId: contactId,
+      content: input,
+      timestamp: Timestamp.now(),
+    };
+    
+    setInput('');
+
+    const messagesRef = collection(firestore, 'chats', chatId, 'messages');
+    await addDoc(messagesRef, newMessage);
+
+    const chatRef = doc(firestore, 'chats', chatId);
+    await updateDoc(chatRef, {
+        lastMessageContent: input,
+        lastMessageTimestamp: serverTimestamp(),
+        status: 'Active', // Mark as active on new message
+    });
   };
-  
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -130,27 +197,31 @@ export default function ClientChatPage() {
             key={message.id}
             className={cn(
               'flex items-start gap-3',
-              message.role === 'user' ? 'justify-end' : 'justify-start'
+              message.sender === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
-            {message.role === 'assistant' && (
+            {(message.sender === 'assistant' || message.sender === 'ai') && (
               <Avatar className="h-8 w-8">
-                 <AvatarFallback><Bot size={20}/></AvatarFallback>
+                <AvatarFallback>
+                  <Bot size={20} />
+                </AvatarFallback>
               </Avatar>
             )}
             <div
               className={cn(
                 'max-w-[75%] rounded-lg p-3 text-sm',
-                message.role === 'user'
+                message.sender === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'
               )}
             >
               <p>{message.content}</p>
             </div>
-             {message.role === 'user' && (
+            {message.sender === 'user' && (
               <Avatar className="h-8 w-8">
-                 <AvatarFallback><User size={20}/></AvatarFallback>
+                <AvatarFallback>
+                  <User size={20} />
+                </AvatarFallback>
               </Avatar>
             )}
           </div>
@@ -169,6 +240,7 @@ export default function ClientChatPage() {
             type="submit"
             size="icon"
             className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+            disabled={!input.trim()}
           >
             <ArrowUp className="h-4 w-4" />
           </Button>

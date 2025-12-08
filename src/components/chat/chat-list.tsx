@@ -15,7 +15,7 @@ import { Search } from 'lucide-react';
 interface ChatListProps {
   isCollapsed: boolean;
   chats: Chat[];
-  selectedChat: Chat;
+  selectedChat: Chat | null;
   setSelectedChat: (chat: Chat) => void;
 }
 
@@ -52,7 +52,7 @@ export function ChatList({
             return (
               <Button
                 key={chat.id}
-                variant={selectedChat.id === chat.id ? 'secondary' : 'ghost'}
+                variant={selectedChat?.id === chat.id ? 'secondary' : 'ghost'}
                 className="h-auto justify-start p-2 text-left"
                 onClick={() => setSelectedChat(chat)}
               >
@@ -77,7 +77,7 @@ export function ChatList({
                 >
                   <p className="font-semibold">{chat.contact.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {chat.messages.slice(-1)[0].content}
+                    {chat.lastMessageContent || chat.messages.slice(-1)[0]?.content}
                   </p>
                 </div>
               </Button>

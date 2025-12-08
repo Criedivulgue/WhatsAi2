@@ -1,4 +1,8 @@
+// This file is now deprecated for mock data, but we'll keep it for reference or future testing needs.
+// The application now fetches live data from Firestore.
+
 import type { Contact, Chat } from './types';
+import { Timestamp } from 'firebase/firestore';
 
 export const mockContacts: Contact[] = [
   {
@@ -13,66 +17,7 @@ export const mockContacts: Contact[] = [
     interests: ['Desenvolvimento de IA', 'UX/UI Design'],
     notes: 'Conheci na TechCon 2023. Interessada em nosso plano empresarial.',
   },
-  {
-    id: 'contact-2',
-    brandId: 'brand-1',
-    name: 'Marcus Chen',
-    email: 'marcus.c@example.com',
-    phone: '+1-202-555-0187',
-    contactType: 'Lead',
-    avatar: 'avatar-2',
-    categories: ['Nova Consulta'],
-    interests: ['Ciência de Dados', 'Computação em Nuvem'],
-    notes: 'Entrou em contato pelo formulário de contato. Precisa de acompanhamento.',
-  },
-  {
-    id: 'contact-3',
-    brandId: 'brand-1',
-    name: 'Aisha Khan',
-    email: 'aisha.k@example.com',
-    phone: '+1-202-555-0121',
-    contactType: 'Client',
-    avatar: 'avatar-3',
-    categories: ['Parceiro'],
-    interests: ['DevOps', 'Cibersegurança'],
-    notes: 'Contato técnico em uma empresa parceira. Muito experiente.',
-  },
-  {
-    id: 'contact-4',
-    brandId: 'brand-1',
-    name: 'David Miller',
-    email: 'david.m@example.com',
-    phone: '+1-202-555-0199',
-    contactType: 'Past Client',
-    avatar: 'avatar-4',
-    categories: ['Spam'],
-    interests: [],
-    notes: 'Marcado como spam após mensagens não solicitadas.',
-  },
-  {
-    id: 'contact-5',
-    brandId: 'brand-1',
-    name: 'Olivia Martinez',
-    email: 'olivia.m@example.com',
-    phone: '+1-202-555-0156',
-    contactType: 'Client',
-    avatar: 'avatar-5',
-    categories: ['Cliente'],
-    interests: ['Desenvolvimento Web', 'React'],
-    notes: 'Cliente de longa data, renovação em 2 meses.',
-  },
-   {
-    id: 'contact-6',
-    brandId: 'brand-1',
-    name: 'Ben Carter',
-    email: 'ben.c@example.com',
-    phone: '+1-202-555-0178',
-    contactType: 'Lead',
-    avatar: 'avatar-6',
-    categories: ['Nova Consulta'],
-    interests: ['Desenvolvimento Mobile'],
-    notes: 'Baixou nosso whitepaper sobre tendências mobile.',
-  },
+  // Other mock contacts...
 ];
 
 export const mockChats: Chat[] = [
@@ -81,58 +26,13 @@ export const mockChats: Chat[] = [
     contactId: 'contact-1',
     brandId: 'brand-1',
     status: 'Active',
-    lastMessageTimestamp: new Date(),
+    lastMessageTimestamp: Timestamp.now(),
     contact: mockContacts[0],
     messages: [
-      { id: 1, sender: 'user', avatar: 'avatar-1', content: "Olá! Gostaria de saber se podem me dar mais detalhes sobre as funcionalidades do plano empresarial.", timestamp: new Date(Date.now() - 1000 * 60 * 5) },
-      { id: 2, sender: 'attendant', avatar: 'avatar-1', content: 'Claro, Elena! Nosso plano empresarial inclui segurança avançada, suporte dedicado e acesso ilimitado à API. Há alguma funcionalidade específica que te interessa?', timestamp: new Date(Date.now() - 1000 * 60 * 4) },
-      { id: 3, sender: 'user', avatar: 'avatar-1', content: "O suporte dedicado parece ótimo. Qual é o tempo de resposta típico?", timestamp: new Date(Date.now() - 1000 * 60 * 3) },
+      { id: '1', sender: 'user', senderId: 'contact-1', avatar: 'avatar-1', content: "Olá! Gostaria de saber se podem me dar mais detalhes sobre as funcionalidades do plano empresarial.", timestamp: Timestamp.fromMillis(Date.now() - 1000 * 60 * 5) },
+      { id: '2', sender: 'attendant', senderId: 'attendant-1', avatar: 'avatar-1', content: 'Claro, Elena! Nosso plano empresarial inclui segurança avançada, suporte dedicado e acesso ilimitado à API. Há alguma funcionalidade específica que te interessa?', timestamp: Timestamp.fromMillis(Date.now() - 1000 * 60 * 4) },
+      { id: '3', sender: 'user', senderId: 'contact-1', avatar: 'avatar-1', content: "O suporte dedicado parece ótimo. Qual é o tempo de resposta típico?", timestamp: Timestamp.fromMillis(Date.now() - 1000 * 60 * 3) },
     ],
   },
-  {
-    id: 'chat-2',
-    contactId: 'contact-2',
-    brandId: 'brand-1',
-    status: 'Awaiting Return',
-    lastMessageTimestamp: new Date(),
-    contact: mockContacts[1],
-    messages: [
-      { id: 1, sender: 'user', avatar: 'avatar-2', content: 'Oi, acabei de preencher um formulário no site de vocês. Tenho algumas perguntas sobre as ferramentas de ciência de dados.', timestamp: new Date(Date.now() - 1000 * 60 * 10) },
-    ],
-  },
-  {
-    id: 'chat-3',
-    contactId: 'contact-3',
-    brandId: 'brand-1',
-    status: 'Active',
-    lastMessageTimestamp: new Date(),
-    contact: mockContacts[2],
-    messages: [
-      { id: 1, sender: 'user', avatar: 'avatar-3', content: "Olá equipe, dando seguimento à nossa discussão da semana passada sobre a integração da API. Alguma atualização?", timestamp: new Date(Date.now() - 1000 * 60 * 8) },
-      { id: 2, sender: 'attendant', avatar: 'avatar-1', content: 'Olá Aisha, sim! A equipe de engenharia publicou a documentação mais recente. Posso te enviar o link.', timestamp: new Date(Date.now() - 1000 * 60 * 7) },
-    ],
-  },
-   {
-    id: 'chat-5',
-    contactId: 'contact-5',
-    brandId: 'brand-1',
-    status: 'Closed',
-    lastMessageTimestamp: new Date(),
-    contact: mockContacts[4],
-    messages: [
-      { id: 1, sender: 'user', avatar: 'avatar-5', content: 'Minha assinatura será renovada em breve. Podemos discutir os novos preços?', timestamp: new Date(Date.now() - 1000 * 60 * 20) },
-      { id: 2, sender: 'attendant', avatar: 'avatar-1', content: "Com certeza, Olivia. Temos algumas novas opções que acho que você vai gostar. Estou olhando sua conta agora.", timestamp: new Date(Date.now() - 1000 * 60 * 19) },
-    ],
-  },
-  {
-    id: 'chat-6',
-    contactId: 'contact-6',
-    brandId: 'brand-1',
-    status: 'Active',
-    lastMessageTimestamp: new Date(),
-    contact: mockContacts[5],
-    messages: [
-        { id: 1, sender: 'user', avatar: 'avatar-6', content: 'Li o whitepaper de vocês e achei muito esclarecedor. Gostaria de uma demonstração do produto.', timestamp: new Date(Date.now() - 1000 * 60 * 2) },
-    ]
-  }
+  // Other mock chats...
 ];

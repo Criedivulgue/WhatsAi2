@@ -6,7 +6,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChatList } from './chat-list';
 import { ChatWindow } from './chat-window';
 import type { Chat } from '@/lib/types';
@@ -24,7 +24,19 @@ export default function ChatLayout({
   chats,
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<Chat>(chats[0]);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(chats[0] || null);
+
+  useEffect(() => {
+    // If chats list updates, make sure a chat is selected if possible
+    if (!selectedChat && chats.length > 0) {
+      setSelectedChat(chats[0]);
+    }
+  }, [chats, selectedChat]);
+  
+
+  if (!selectedChat) {
+     return <div className="flex h-full w-full items-center justify-center">Selecione um chat para começar.</div>;
+  }
 
   return (
     <ResizablePanelGroup
@@ -69,13 +81,13 @@ export default function ChatLayout({
       <ResizableHandle withHandle />
 
       <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-        <ChatWindow chat={selectedChat} />
+        <ChatWindow key={selectedChat.id} chat={selectedChat} />
       </ResizablePanel>
 
       <ResizableHandle withHandle />
 
       <ResizablePanel defaultSize={defaultLayout[2]} minSize={25} maxSize={35}>
-        <ContactPanel chat={selectedChat} />
+        <ContactPanel key={selectedChat.id} chat={selectedChat} />
       </ResizablePanel>
     </ResizablePanelGroup>
   );

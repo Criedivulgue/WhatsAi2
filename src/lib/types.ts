@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type Contact = {
   id: string;
   name: string;
@@ -12,23 +14,26 @@ export type Contact = {
 };
 
 export type Message = {
-  id: number;
-  sender: string; // 'user' (contact) or 'attendant'
+  id?: string; // Firestore will generate this
+  sender: string; // 'user' (contact) or 'attendant' or 'ai'
   content: string;
-  timestamp: Date;
-  avatar: string; // Keep if you want to show avatars per message
+  timestamp: Timestamp;
+  avatar?: string;
+  senderId: string;
 };
 
 export type Chat = {
   id: string;
   contactId: string;
   brandId: string;
-  attendantId?: string; // Can be optional initially
+  attendantId?: string;
   status: 'Active' | 'Awaiting Return' | 'Closed' | 'Archived' | 'AI-Assisted';
-  lastMessageTimestamp: Date;
-  messages: Message[];
+  lastMessageTimestamp: Timestamp;
+  lastMessageContent?: string;
   // For UI convenience, we might join the contact details
   contact?: Contact;
+  // This will be populated after fetching from Firestore
+  messages: Message[]; 
 };
 
 export type ProfileEnrichments = {

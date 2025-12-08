@@ -35,14 +35,16 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useDoc, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type {
   Chat,
+  Contact,
   FollowUpSuggestions,
   ProfileEnrichments,
 } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { doc } from 'firebase/firestore';
 import {
   Bot,
   BrainCircuit,
@@ -55,18 +57,36 @@ import {
   ThumbsUp,
   Workflow,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface ContactPanelProps {
   chat: Chat;
 }
 
 export function ContactPanel({ chat }: ContactPanelProps) {
-  const { contact } = chat;
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const contactRef = useMemo(() => {
+    if (!chat?.contactId) return null;
+    return doc(firestore, 'contacts', chat.contactId);
+  }, [chat?.contactId, firestore]);
+
+  const { data: contact, loading } = useDoc<Contact>(contactRef);
+  
+  if (loading) {
+    return (
+       <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+        <Loader2 className="animate-spin" />
+        <p className="text-muted-foreground mt-2">Carregando contato...</p>
+      </div>
+    )
+  }
+
   if (!contact) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-        <p className="text-muted-foreground">Selecione um chat para ver os detalhes do contato.</p>
+        <p className="text-muted-foreground">Detalhes do contato não encontrados.</p>
       </div>
     );
   }
@@ -130,7 +150,7 @@ export function ContactPanel({ chat }: ContactPanelProps) {
             </CardContent>
           </Card>
 
-          <AiTools chat={chat} />
+          <AiTools chat={{...chat, contact}} />
         </div>
       </ScrollArea>
     </div>
@@ -172,6 +192,11 @@ function AiTools({ chat }: { chat: Chat }) {
         ...enrichments.adjustedCategories.map((c) => ({ type: 'Categoria', value: c })),
       ]
     : [];
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado!", description: "O conteúdo foi copiado para a área de transferência." });
+  };
 
   return (
     <Card className="mt-4">
@@ -279,8 +304,8 @@ function AiTools({ chat }: { chat: Chat }) {
                       </SheetTrigger>
                       <SheetContent>
                         <SheetHeader><SheetTitle>Rascunho de Email</SheetTitle></SheetHeader>
-                        <Textarea defaultValue={followUps.emailDraft} className="h-64 mt-4" />
-                        <Button className="mt-4"><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
+                        <Textarea defaultValue={followUps.emailDraft} className="h-64 mt-4" readOnly />
+                        <Button className="mt-4" onClick={() => copyToClipboard(followUps.emailDraft)}><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
                       </SheetContent>
                     </Sheet>
                      <Sheet>
@@ -289,8 +314,8 @@ function AiTools({ chat }: { chat: Chat }) {
                       </SheetTrigger>
                       <SheetContent>
                         <SheetHeader><SheetTitle>Mensagem de WhatsApp</SheetTitle></SheetHeader>
-                        <Textarea defaultValue={followUps.whatsAppMessage} className="h-64 mt-4" />
-                        <Button className="mt-4"><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
+                        <Textarea defaultValue={followUps.whatsAppMessage} className="h-64 mt-4" readOnly />
+                        <Button className="mt-4" onClick={() => copyToClipboard(followUps.whatsAppMessage)}><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
                       </SheetContent>
                     </Sheet>
                   </div>

@@ -1,0 +1,158 @@
+{
+  "entities": {
+    "brand": {
+      "title": "Brand",
+      "description": "Stores onboarding data for a brand.",
+      "type": "object",
+      "properties": {
+        "brandName": {
+          "type": "string",
+          "description": "The name of the brand."
+        },
+        "brandTone": {
+          "type": "string",
+          "description": "The brand's tone of voice."
+        },
+        "hardRules": {
+          "type": "string",
+          "description": "Strict prohibitions for AI interactions."
+        },
+        "softRules": {
+          "type": "string",
+          "description": "Stylistic guidelines for the AI."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The user ID of the attendant who owns the brand."
+        }
+      },
+      "required": ["brandName", "brandTone", "ownerId"]
+    },
+    "user": {
+      "title": "User",
+      "description": "Stores attendant user data.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the attendant."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of the attendant."
+        },
+        "brandId": {
+          "type": "string",
+          "description": "The brand this attendant belongs to."
+        }
+      },
+      "required": ["name", "email", "brandId"]
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "Represents a customer or lead.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "contactType": {
+          "type": "string",
+          "enum": ["Lead", "Prospect", "Client", "VIP", "Past Client"]
+        },
+        "brandId": { "type": "string" },
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "interests": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      },
+      "required": ["name", "phone", "contactType", "brandId"]
+    },
+    "chat": {
+      "title": "Chat",
+      "description": "A single chat conversation.",
+      "type": "object",
+      "properties": {
+        "contactId": { "type": "string" },
+        "brandId": { "type": "string" },
+        "attendantId": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Awaiting Return", "Closed", "Archived", "AI-Assisted"]
+        },
+        "lastMessageTimestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["contactId", "brandId", "status"]
+    },
+    "message": {
+      "title": "Message",
+      "description": "A message within a chat.",
+      "type": "object",
+      "properties": {
+        "sender": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sender", "content", "timestamp"]
+    },
+    "summary": {
+      "title": "Summary",
+      "description": "An AI-generated summary of a chat.",
+      "type": "object",
+      "properties": {
+        "summaryText": { "type": "string" },
+        "actionItems": { "type": "array", "items": { "type": "string" } },
+        "sentiment": { "type": "string", "enum": ["Positive", "Neutral", "Negative"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["summaryText", "createdAt"]
+    },
+    "aiLog": {
+      "title": "AI Log",
+      "description": "A log of an AI action.",
+      "type": "object",
+      "properties": {
+        "flowName": { "type": "string" },
+        "modelUsed": { "type": "string" },
+        "inputHash": { "type": "string" },
+        "outputJSON": { "type": "string" },
+        "userAction": { "type": "string", "enum": ["accepted", "dismissed"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["flowName", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/brands/{brandId}": {
+      "schema": { "$ref": "#/entities/brand" },
+      "description": "Stores brand-specific onboarding data."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/user" },
+      "description": "Stores attendant user data, linked to a brandId."
+    },
+    "/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/contact" },
+      "description": "Stores individual contact profiles."
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/chat" },
+      "description": "Top-level collection for chat sessions."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/message" },
+      "description": "Sub-collection for messages within a specific chat."
+    },
+    "/chats/{chatId}/summaries/{summaryId}": {
+      "schema": { "$ref": "#/entities/summary" },
+      "description": "Sub-collection for AI-generated summaries of a chat."
+    },
+    "/ai_logs/{logId}": {
+      "schema": { "$ref": "#/entities/aiLog" },
+      "description": "Logs all AI tool executions for auditing and debugging."
+    }
+  }
+}

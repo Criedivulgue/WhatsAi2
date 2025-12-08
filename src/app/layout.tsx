@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { PT_Sans, Source_Code_Pro } from 'next/font/google'
+import { PT_Sans, Source_Code_Pro } from 'next/font/google';
+import { FirebaseClientProvider } from '@/firebase';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -18,10 +19,12 @@ const sourceCodePro = Source_Code_Pro({
 
 export const metadata: Metadata = {
   title: 'WhatsAi',
-  description: 'A plataforma completa de gerenciamento de contatos e bate-papo com tecnologia de IA',
+  description:
+    'A plataforma completa de gerenciamento de contatos e bate-papo com tecnologia de IA',
   openGraph: {
     title: 'WhatsAi',
-    description: 'A plataforma completa de gerenciamento de contatos e bate-papo com tecnologia de IA',
+    description:
+      'A plataforma completa de gerenciamento de contatos e bate-papo com tecnologia de IA',
     url: 'https://whatsai.app',
     siteName: 'WhatsAi',
     images: [
@@ -41,7 +44,7 @@ export const viewport: Viewport = {
     { media: '(prefers-color-scheme: light)', color: '#E5F8E8' },
     { media: '(prefers-color-scheme: dark)', color: '#1A1B1E' },
   ],
-}
+};
 
 export default function RootLayout({
   children,
@@ -50,9 +53,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={cn("min-h-screen font-body antialiased", ptSans.variable, sourceCodePro.variable)}>
-        {children}
-        <Toaster />
+      <body
+        className={cn(
+          'min-h-screen font-body antialiased',
+          ptSans.variable,
+          sourceCodePro.variable
+        )}
+      >
+        <FirebaseClientProvider>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

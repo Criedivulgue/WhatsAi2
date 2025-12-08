@@ -52,6 +52,7 @@ const attendantSettingsSchema = z.object({
   attendantPersona: z.string().optional(),
 });
 
+// We don't need a schema for AI settings form as it's just switches
 const aiSettingsSchema = z.object({
   autoSummarize: z.boolean().default(true),
   autoEnrich: z.boolean().default(false),
@@ -122,7 +123,7 @@ export default function SettingsPage() {
   }, [brandData, userData, brandForm, attendantForm, aiForm]);
 
   const onBrandSubmit = async (data: BrandSettingsFormValues) => {
-    if (!brandData) return;
+    if (!brandData?.id) return;
     await updateBrandData(firestore, brandData.id, data);
     toast({
       title: 'Sucesso!',
@@ -140,7 +141,7 @@ export default function SettingsPage() {
   };
 
   const onAiSubmit = async (data: AiSettingsFormValues) => {
-    if (!brandData) return;
+    if (!brandData?.id) return;
     await updateBrandData(firestore, brandData.id, { aiConfig: data });
     toast({
       title: 'Sucesso!',
@@ -155,7 +156,6 @@ export default function SettingsPage() {
     setIsUploading(true);
     try {
       const downloadURL = await uploadAvatar(storage, user.uid, file);
-      // Directly update the user profile in Firestore
       await updateUserProfile(firestore, user.uid, { avatarUrl: downloadURL });
       toast({
         title: 'Avatar atualizado!',

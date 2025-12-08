@@ -27,7 +27,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useRouter } from 'next/navigation';
 import Logo from './logo';
-import { Switch } from './ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { createBrandAndUser } from '@/firebase/firestore/mutations';
 import { useAuth, useFirestore, useStorage } from '@/firebase';
@@ -52,9 +51,7 @@ const detailsSchema = z.object({
 });
 
 const aiConfigSchema = z.object({
-  autoSummarize: z.boolean().default(true),
-  autoEnrich: z.boolean().default(false),
-  autoFollowUp: z.boolean().default(false),
+  // These fields are for the AI settings step, but we are simplifying for now
 });
 
 const formSchema = brandSchema.merge(detailsSchema).merge(aiConfigSchema);
@@ -73,15 +70,15 @@ const formSteps = [
     schema: detailsSchema,
   },
   {
-    title: 'Configuração da IA',
-    fields: ['autoSummarize', 'autoEnrich', 'autoFollowUp'],
-    schema: aiConfigSchema,
+    title: 'Finalizando',
+    fields: [],
+    schema: z.object({}),
   },
 ];
 
 export default function OnboardingFlow() {
   const [step, setStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -91,7 +88,7 @@ export default function OnboardingFlow() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<OnboardingFormValues>({
-    resolver: zodResolver(formSchema), // Validate the entire schema on submit
+    resolver: zodResolver(formSteps[step].schema),
     defaultValues: {
       brandName: '',
       slogan: '',
@@ -103,9 +100,6 @@ export default function OnboardingFlow() {
       avatarUrl: '',
       attendantEmail: '',
       password: '',
-      autoSummarize: true,
-      autoEnrich: false,
-      autoFollowUp: false,
     },
     mode: 'onChange',
   });
@@ -118,7 +112,6 @@ export default function OnboardingFlow() {
     const file = event.target.files?.[0];
     if (!file || !storage) return;
 
-    // Use a temporary user ID for the path, as the user is not created yet.
     const tempId = `onboarding-${Date.now()}`;
     setIsUploading(true);
     try {
@@ -143,10 +136,8 @@ export default function OnboardingFlow() {
   const nextStep = async () => {
     const fieldsToValidate = formSteps[step].fields as (keyof OnboardingFormValues)[];
     const isValid = await trigger(fieldsToValidate);
-    if (isValid) {
-      if (step < formSteps.length - 1) {
-        setStep(step + 1);
-      }
+    if (isValid && step < formSteps.length - 1) {
+      setStep(step + 1);
     }
   };
 
@@ -156,10 +147,9 @@ export default function OnboardingFlow() {
     }
   };
 
-  const onSubmit = async () => {
-    setIsLoading(true);
+  const onSubmit = async (data: OnboardingFormValues) => {
+    setIsSubmitting(true);
     try {
-      const data = getValues();
       if (!data.avatarUrl) {
           throw new Error('Por favor, faça o upload de uma imagem de avatar.');
       }
@@ -177,7 +167,7 @@ export default function OnboardingFlow() {
         description: error.message || 'Não foi possível criar sua conta. Tente novamente.',
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -325,50 +315,11 @@ export default function OnboardingFlow() {
                 </div>
               )}
               {step === 2 && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold font-headline">{formSteps[2].title}</h3>
-                   <FormField
-                    control={form.control}
-                    name="knowledgeBase"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base de Conhecimento (Opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="ex: Nossos produtos são X, Y, Z. Nossa política de devolução é..." {...field} className="h-24"/>
-                        </FormControl>
-                        <FormDescription>Informações sobre seus produtos, serviços, políticas, etc.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="hardRules"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Regras Rígidas (Opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="ex: Nunca oferecer descontos..." {...field} />
-                        </FormControl>
-                        <FormDescription>Proibições que a IA não pode violar.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="softRules"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Regras Flexíveis (Opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="ex: Usar emojis com moderação..." {...field} />
-                        </FormControl>
-                        <FormDescription>Diretrizes de estilo que moldam a personalidade da IA.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                 <div className="space-y-6 text-center pt-10">
+                  <h3 className="text-2xl font-bold font-headline">Tudo pronto!</h3>
+                  <p className="text-muted-foreground">
+                    Você está pronto para começar a usar o WhatsAi. Clique no botão abaixo para ir para o seu painel.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -383,9 +334,9 @@ export default function OnboardingFlow() {
                   Próximo
                 </Button>
               ) : (
-                <Button type="submit" disabled={isLoading || isUploading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Finalizar Configuração
+                <Button type="submit" disabled={isSubmitting || isUploading}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Finalizar e ir para o Painel
                 </Button>
               )}
             </CardFooter>

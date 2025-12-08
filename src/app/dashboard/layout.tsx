@@ -8,6 +8,7 @@ import {
   PanelLeft,
   Settings,
   LogOut,
+  Copy,
 } from 'lucide-react';
 
 import {
@@ -18,9 +19,15 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const navItems = [
   { href: '/dashboard', icon: MessageSquare, label: 'Chat' },
@@ -34,6 +41,19 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages[0];
+  const { user } = useUser();
+  const { toast } = useToast();
+
+  const handleCopyLink = () => {
+    if (user) {
+      const chatLink = `${window.location.origin}/client-chat/${user.uid}`;
+      navigator.clipboard.writeText(chatLink);
+      toast({
+        title: 'Link Copiado!',
+        description: 'O link do chat do cliente foi copiado para sua área de transferência.',
+      });
+    }
+  };
 
   const mainNav = (
     <nav className="grid gap-1 p-2">
@@ -164,7 +184,10 @@ export default function DashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="relative ml-auto flex-1 md:grow-0">
-             {/* Pode adicionar uma barra de pesquisa aqui mais tarde */}
+             <Button variant="outline" onClick={handleCopyLink}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar link do chat
+            </Button>
           </div>
            <Avatar>
             <AvatarImage src={userAvatar.imageUrl} alt="User avatar" data-ai-hint={userAvatar.imageHint} />

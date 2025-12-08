@@ -3,14 +3,13 @@
 
 import { generateChatSummary } from '@/ai/flows/generate-chat-summary';
 import { generateFollowUpSuggestions } from '@/ai/flows/generate-follow-up-suggestions';
-import { generateInitialGreeting } from '@/ai/flows/generate-initial-greeting';
+import { generateInitialGreeting, GenerateInitialGreetingInput } from '@/ai/flows/generate-initial-greeting';
 import { suggestProfileEnrichments } from '@/ai/flows/suggest-profile-enrichments';
 import type { Chat } from '@/lib/types';
 
 
-export async function getInitialGreetingAction(clientPhoneNumber: string) {
-    // TODO: Inject Brand Context here
-    return await generateInitialGreeting({ clientPhoneNumber });
+export async function getInitialGreetingAction(input: GenerateInitialGreetingInput) {
+    return await generateInitialGreeting(input);
 }
 
 export async function getChatSummaryAction(conversationText: string) {

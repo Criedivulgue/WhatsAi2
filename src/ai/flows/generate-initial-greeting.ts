@@ -15,6 +15,8 @@ const GenerateInitialGreetingInputSchema = z.object({
   clientPhoneNumber: z
     .string()
     .describe('O número de telefone do cliente que entra no chat do PWA.'),
+  brandTone: z.string().describe("O tom de voz da marca para a saudação."),
+  softRules: z.string().optional().describe("As regras flexíveis da marca para guiar a IA."),
 });
 
 export type GenerateInitialGreetingInput = z.infer<
@@ -44,8 +46,12 @@ const initialGreetingPrompt = ai.definePrompt({
   O número de telefone do cliente é {{{clientPhoneNumber}}}.
 
   Gere uma mensagem de saudação breve e amigável explicando como interagir com o sistema de chat. Mantenha a saudação concisa, com menos de 50 palavras.
-  Seja conversacional e prestativo.
-  Indique que você é um assistente de IA.`,
+  Seja conversacional e prestativo. Indique que você é um assistente de IA.
+
+  Adapte sua resposta para corresponder ao seguinte tom e regras da marca:
+  Tom: {{{brandTone}}}
+  Diretrizes: {{{softRules}}}
+  `,
 });
 
 const generateInitialGreetingFlow = ai.defineFlow(

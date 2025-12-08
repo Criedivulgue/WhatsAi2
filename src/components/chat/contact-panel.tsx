@@ -48,6 +48,7 @@ import { doc } from 'firebase/firestore';
 import {
   Bot,
   BrainCircuit,
+  Calendar,
   Clipboard,
   Loader2,
   Mail,
@@ -57,6 +58,7 @@ import {
   ThumbsUp,
   Workflow,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 interface ContactPanelProps {
@@ -92,6 +94,8 @@ export function ContactPanel({ chat }: ContactPanelProps) {
   }
   const avatar = PlaceHolderImages.find((p) => p.id === contact.avatar);
 
+  const calendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=Reunião+com+${encodeURIComponent(contact.name)}`;
+
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-center border-b bg-card p-4">
@@ -107,8 +111,22 @@ export function ContactPanel({ chat }: ContactPanelProps) {
                   {contact.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid">
-                <CardTitle>{contact.name}</CardTitle>
+              <div className="grid flex-1">
+                <div className='flex justify-between items-start'>
+                  <CardTitle>{contact.name}</CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                      <Link href={`mailto:${contact.email}`} target="_blank">
+                        <Mail className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                      <Link href={calendarLink} target="_blank">
+                        <Calendar className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
                 <CardDescription>{contact.phone}</CardDescription>
                 <CardDescription>{contact.email}</CardDescription>
               </div>

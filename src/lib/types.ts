@@ -1,5 +1,12 @@
 import type { Timestamp } from 'firebase/firestore';
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  brandId: string;
+}
+
 export type Contact = {
   id: string;
   name: string;

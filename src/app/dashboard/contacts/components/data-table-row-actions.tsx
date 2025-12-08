@@ -32,9 +32,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { deleteContact } from '@/firebase/firestore/contacts';
 import { useFirestore } from '@/firebase';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface DataTableRowActionsProps {
-  row: Row<Contact>;
+interface DataTableRowActionsProps<TData> {
+  row: Row<TData>;
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps<Contact>) {
@@ -92,15 +93,17 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps<Contact>) 
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <SheetContent className="w-full sm:max-w-md">
+        <SheetContent className="w-full sm:max-w-md flex flex-col">
           <SheetHeader>
             <SheetTitle>Editar Contato</SheetTitle>
           </SheetHeader>
-          <ContactForm
-            contact={contact}
-            brandId={contact.brandId}
-            onSuccess={() => setIsSheetOpen(false)}
-          />
+          <ScrollArea className="flex-grow">
+            <ContactForm
+              contact={contact}
+              brandId={contact.brandId}
+              onSuccess={() => setIsSheetOpen(false)}
+            />
+          </ScrollArea>
         </SheetContent>
       </Sheet>
 

@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ContactForm } from './components/contact-form';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ContactsPage() {
   const { user, loading: userLoading } = useUser();
@@ -55,14 +56,16 @@ export default function ContactsPage() {
                 Adicionar Contato
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md">
+            <SheetContent className="w-full sm:max-w-md flex flex-col">
               <SheetHeader>
                 <SheetTitle>Adicionar Novo Contato</SheetTitle>
               </SheetHeader>
-              <ContactForm
-                brandId={userData?.brandId}
-                onSuccess={() => setIsSheetOpen(false)}
-              />
+              <ScrollArea className="flex-grow">
+                <ContactForm
+                  brandId={userData?.brandId}
+                  onSuccess={() => setIsSheetOpen(false)}
+                />
+              </ScrollArea>
             </SheetContent>
           </Sheet>
         </div>

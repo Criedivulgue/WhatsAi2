@@ -38,12 +38,12 @@ export default function ContactsPage() {
       collection(firestore, 'contacts'),
       where('brandId', '==', userData.brandId)
     );
-  }, [userData, firestore]);
+  }, [userData?.brandId, firestore]);
 
   const { data: contactsData, loading: contactsLoading } =
     useCollection<Contact>(contactsQuery);
   const isLoading = userLoading || userDataLoading || contactsLoading;
-  const isButtonDisabled = userLoading || userDataLoading;
+  const isButtonDisabled = userLoading || userDataLoading || !userData?.brandId;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

@@ -88,13 +88,14 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
   const onSubmit = async (data: ContactFormValues) => {
     try {
       if (isEditMode) {
+        if (!contact.brandId) throw new Error('ID da marca não encontrado no contato existente.');
         await updateContact(firestore, contact.id, data);
         toast({
           title: 'Contato atualizado!',
           description: `${data.name} foi atualizado com sucesso.`,
         });
       } else {
-        if (!brandId) throw new Error('ID da marca não encontrado.');
+        if (!brandId) throw new Error('ID da marca não encontrado. O formulário não pode ser enviado.');
         await addContact(firestore, brandId, data);
         toast({
           title: 'Contato adicionado!',
@@ -190,7 +191,7 @@ export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+        <Button type="submit" disabled={form.formState.isSubmitting || (!isEditMode && !brandId)} className="w-full">
           {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditMode ? 'Salvar Alterações' : 'Adicionar Contato'}
         </Button>

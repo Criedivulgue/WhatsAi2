@@ -45,6 +45,7 @@ import type {
   FollowUpSuggestions,
   ProfileEnrichments,
 } from '@/lib/types';
+import { copyToClipboard } from '@/lib/utils'; // Import the robust utility function
 import { doc } from 'firebase/firestore';
 import {
   Bot,
@@ -68,7 +69,6 @@ interface ContactPanelProps {
 
 export function ContactPanel({ chat }: ContactPanelProps) {
   const firestore = useFirestore();
-  const { toast } = useToast();
 
   const contactRef = useMemo(() => {
     if (!chat?.contactId) return null;
@@ -222,9 +222,19 @@ function AiTools({ chat }: { chat: Chat }) {
       ]
     : [];
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copiado!", description: "O conteúdo foi copiado para a área de transferência." });
+  // This local function is no longer needed.
+  // const copyToClipboard = (text: string) => {
+  //   navigator.clipboard.writeText(text);
+  //   toast({ title: "Copiado!", description: "O conteúdo foi copiado para a área de transferência." });
+  // };
+
+  const handleCopy = async (text: string) => {
+    try {
+      await copyToClipboard(text);
+      toast({ title: "Copiado!", description: "O conteúdo foi copiado para a área de transferência." });
+    } catch (error) {
+      toast({ title: "Falha ao Copiar", description: "Não foi possível copiar o conteúdo.", variant: "destructive" });
+    }
   };
 
   return (
@@ -334,7 +344,7 @@ function AiTools({ chat }: { chat: Chat }) {
                       <SheetContent>
                         <SheetHeader><SheetTitle>Rascunho de Email</SheetTitle></SheetHeader>
                         <Textarea defaultValue={followUps.emailDraft} className="h-64 mt-4" readOnly />
-                        <Button className="mt-4" onClick={() => copyToClipboard(followUps.emailDraft)}><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
+                        <Button className="mt-4" onClick={() => handleCopy(followUps.emailDraft)}><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
                       </SheetContent>
                     </Sheet>
                      <Sheet>
@@ -344,7 +354,7 @@ function AiTools({ chat }: { chat: Chat }) {
                       <SheetContent>
                         <SheetHeader><SheetTitle>Mensagem de WhatsApp</SheetTitle></SheetHeader>
                         <Textarea defaultValue={followUps.whatsAppMessage} className="h-64 mt-4" readOnly />
-                        <Button className="mt-4" onClick={() => copyToClipboard(followUps.whatsAppMessage)}><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
+                        <Button className="mt-4" onClick={() => handleCopy(followUps.whatsAppMessage)}><Clipboard className="mr-2 h-4 w-4"/> Copiar</Button>
                       </SheetContent>
                     </Sheet>
                   </div>

@@ -10,18 +10,25 @@ service cloud.firestore {
     }
 
     function getUserBrandId() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.brandId;
+      // Gracefully handle cases where brandId might not exist yet.
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('brandId', null);
     }
 
     function isUserBrandMember(brandId) {
       return isUserAuthenticated() && getUserBrandId() == brandId;
     }
 
-    // Rules for user profiles and their contacts subcollection
+    // Rules for user profiles
     match /users/{userId} {
-      allow read, write: if isUserAuthenticated() && request.auth.uid == userId;
+      // Allow public read so the client chat page can display the attendant's info.
+      // This is safe as long as user docs do not contain sensitive private data.
+      allow read: if true;
 
-      // A user can manage their own contacts.
+      // Allow a user to write ONLY to their own profile.
+      allow write: if isUserAuthenticated() && request.auth.uid == userId;
+
+      // DEPRECATED: This subcollection is no longer in use, but the rule is kept 
+      // to avoid unintended side effects if old data exists.
       match /contacts/{contactId} {
         allow read, write: if isUserAuthenticated() && request.auth.uid == userId;
       }
@@ -29,21 +36,40 @@ service cloud.firestore {
 
     // Rules for brands
     match /brands/{brandId} {
-      // Allow public read for client chat, but restrict writes to brand members.
+      // Allow public read for client chat.
       allow read: if true;
-      allow write: if isUserBrandMember(brandId);
+
+      // Allow brand creation by any authenticated user.
+      allow create: if isUserAuthenticated();
+
+      // Allow updates and deletes only by verified brand members.
+      allow update, delete: if isUserBrandMember(brandId);
+    }
+    
+    // Rules for contacts
+    match /contacts/{contactId} {
+        // A brand member can manage all contacts associated with their brand.
+        allow read, write: if isUserAuthenticated() && isUserBrandMember(resource.data.brandId);
     }
 
     // Rules for chats and their messages
     match /chats/{chatId} {
-      // Allow read/write for brand members or for unauthenticated users on client-chat pages
-      allow read, write: if (isUserAuthenticated() && isUserBrandMember(resource.data.brandId)) || 
-                           (request.auth == null && resource.data.brandId != null);
+      // Allow read/write for brand members.
+      allow read, write: if isUserAuthenticated() && isUserBrandMember(resource.data.brandId);
       
+      // Allow a client (unauthenticated) to create a chat.
+      allow create: if request.auth == null;
+
+      // Allow a client (unauthenticated) to read/update an existing chat they are part of.
+      // This rule is intentionally broad for the workshop; a real app would have stricter validation.
+      allow read, update: if request.auth == null && resource.data.brandId != null;
+
       match /messages/{messageId} {
-        // Allow read/write for brand members or unauthenticated users for messages in accessible chats
-        allow read, write: if (isUserAuthenticated() && isUserBrandMember(get(/databases/$(database)/documents/chats/$(chatId)).data.brandId)) ||
-                           (request.auth == null && get(/databases/$(database)/documents/chats/$(chatId)).data.brandId != null);
+        // Allow read/write for brand members.
+        allow read, write: if isUserAuthenticated() && isUserBrandMember(get(/databases/$(database)/documents/chats/$(chatId)).data.brandId);
+
+        // Allow client (unauthenticated) to add and read messages in their chat.
+        allow read, create: if request.auth == null && get(/databases/$(database)/documents/chats/$(chatId)).data.brandId != null;
       }
     }
   }

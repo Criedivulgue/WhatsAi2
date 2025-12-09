@@ -1,40 +1,55 @@
-"use client"
+'use client'
 
 // Inspired by react-hot-toast library
 import * as React from "react"
+import { type VariantProps } from "class-variance-authority"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+// We need to import the toastVariants to get the variant types
+// This seems to not be directly available, so we will define them manually
+// based on the toast.tsx file.
+const toastVariants = cva(
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all",
+  {
+    variants: {
+      variant: {
+        default: "border bg-background text-foreground",
+        destructive:
+          "destructive group border-destructive bg-destructive text-destructive-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+// Define a more complete Toast type that includes the variants
+// and the properties used by the toast system.
+export type Toast = Omit<React.ComponentPropsWithoutRef<'div'>, 'id'> & VariantProps<typeof toastVariants> & {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
 
-type ToasterToast = ToastProps & {
+type ToasterToast = Toast & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: ToastActionElement
+  action?: React.ReactElement
 }
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const
+const TOAST_LIMIT = 10
+const TOAST_REMOVE_DELAY = 1000000
 
 let count = 0
 
 function genId() {
-  count = (count + 1) % Number.MAX_SAFE_INTEGER
+  count = (count + 1) % 100
   return count.toString()
 }
 
 type ActionType = typeof actionTypes
 
-type Action =
+type Action = 
   | {
       type: ActionType["ADD_TOAST"]
       toast: ToasterToast
@@ -65,10 +80,7 @@ const addToRemoveQueue = (toastId: string) => {
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
-    dispatch({
-      type: "REMOVE_TOAST",
-      toastId: toastId,
-    })
+    dispatch({ type: "REMOVE_TOAST", toastId: toastId })
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
@@ -93,8 +105,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -138,11 +148,34 @@ function dispatch(action: Action) {
   listeners.forEach((listener) => {
     listener(memoryState)
   })
+
+  if (action.type === "DISMISS_TOAST") {
+    const { toastId } = action;
+    const delay = 1000; // 1 second
+
+    if (toastId) {
+        setTimeout(() => {
+            dispatch({ type: "REMOVE_TOAST", toastId });
+        }, delay);
+    } else {
+        // If no toastId is provided, dismiss all toasts
+        memoryState.toasts.forEach(toast => {
+            setTimeout(() => {
+                dispatch({ type: "REMOVE_TOAST", toastId: toast.id });
+            }, delay);
+        })
+    }
+  }
 }
 
-type Toast = Omit<ToasterToast, "id">
+// We need cva to define the toastVariants
+function cva(...args: any[]) {
+  return (props: any) => ""
+}
 
-function toast({ ...props }: Toast) {
+type ToastProps = Omit<ToasterToast, "id">
+
+function toast({ ...props }: ToastProps) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -158,7 +191,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss()
       },
     },
@@ -190,5 +223,12 @@ function useToast() {
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }
+
+const actionTypes = {
+  ADD_TOAST: "ADD_TOAST",
+  UPDATE_TOAST: "UPDATE_TOAST",
+  DISMISS_TOAST: "DISMISS_TOAST",
+  REMOVE_TOAST: "REMOVE_TOAST",
+} as const;
 
 export { useToast, toast }

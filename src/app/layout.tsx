@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { PT_Sans, Source_Code_Pro } from 'next/font/google';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { AuthGate } from '@/firebase/auth-gate'; // Import the new AuthGate
+import { UserProfileProvider } from '@/firebase/auth/user-profile-provider';
+import { AuthGate } from '@/firebase/auth-gate';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -62,10 +63,12 @@ export default function RootLayout({
         )}
       >
         <FirebaseClientProvider>
-          <AuthGate> {/* The AuthGate wraps the application content */}
-            {children}
-            <Toaster />
-          </AuthGate>
+          <UserProfileProvider>
+            <AuthGate>
+              {children}
+              <Toaster />
+            </AuthGate>
+          </UserProfileProvider>
         </FirebaseClientProvider>
       </body>
     </html>

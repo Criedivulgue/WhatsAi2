@@ -1,28 +1,30 @@
 'use client';
 
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  type FirebaseStorage,
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL
 } from 'firebase/storage';
+import { storage } from './index'; // Import the initialized storage instance
 
 /**
- * Uploads an avatar image to Firebase Storage.
- * @param storage The Firebase Storage instance.
- * @param userId The ID of the user uploading the avatar.
- * @param file The image file to upload.
- * @param path The storage path (e.g., 'avatars').
- * @returns The public download URL of the uploaded image.
+ * Uploads a file to Firebase Storage and returns its public URL.
+ * This is a generic utility that can be used for any file type.
+ *
+ * @param file The file to upload.
+ * @param path The destination path in the storage bucket (e.g., 'avatars/user123/profile.jpg').
+ * @returns The public download URL of the uploaded file.
  */
-export async function uploadAvatar(
-  storage: FirebaseStorage,
-  userId: string,
+export async function uploadFileToStorage(
   file: File,
-  path: string = 'avatars'
+  path: string
 ): Promise<string> {
-  // Create a storage reference with a unique name
-  const storageRef = ref(storage, `${path}/${userId}/${file.name}`);
+  if (!file || !path) {
+    throw new Error('File and path must be provided.');
+  }
+
+  // Create a storage reference
+  const storageRef = ref(storage, path);
 
   // Upload the file
   const snapshot = await uploadBytes(storageRef, file);

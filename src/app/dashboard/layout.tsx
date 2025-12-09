@@ -23,12 +23,16 @@ import Logo from '@/components/logo';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { UserProfileProvider, useUserProfile } from '@/firebase/auth/user-profile-provider';
+import { copyToClipboard } from '@/lib/utils';
+import { AuthGate } from '@/firebase/auth-gate'; // Import the AuthGate
 
 const navItems = [
   { href: '/dashboard', icon: MessageSquare, label: 'Chat' },
@@ -41,14 +45,22 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { user: composedUser, loading } = useUserProfile();
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     if (composedUser?.brandId) {
       const chatLink = `${window.location.origin}/c/${composedUser.brandId}`;
-      navigator.clipboard.writeText(chatLink);
-      toast({
-        title: 'Link Copiado!',
-        description: 'O link do chat do cliente foi copiado para sua área de transferência.',
-      });
+      try {
+        await copyToClipboard(chatLink);
+        toast({
+          title: 'Link Copiado!',
+          description: 'O link do chat do cliente foi copiado para sua área de transferência.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Falha ao Copiar',
+          description: 'Não foi possível copiar o link. Por favor, tente manually.',
+          variant: 'destructive',
+        });
+      }
     } else {
       toast({
         title: 'Erro',
@@ -148,6 +160,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Menu</SheetTitle>
+              </SheetHeader>
               <nav className="grid gap-6 text-lg font-medium">
                  <Link
                   href="/dashboard"
@@ -184,7 +199,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               </nav>
             </SheetContent>
           </Sheet>
-          <div className="relative ml-auto flex-1 md:grow-0">
+          <div className="relative ml-auto">
              <Button variant="outline" onClick={handleCopyLink}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar link do chat
@@ -209,8 +224,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <UserProfileProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </UserProfileProvider>
+    <AuthGate>
+      <UserProfileProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </UserProfileProvider>
+    </AuthGate>
   );
 }

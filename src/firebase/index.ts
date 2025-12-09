@@ -1,48 +1,30 @@
 'use client';
 
+// #region Firebase Core Imports
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  type Auth,
-} from 'firebase/auth';
+import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-import { 
-  getStorage, 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  type FirebaseStorage
-} from 'firebase/storage';
-import { useEffect } from 'react';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
+// #endregion
 
-// Correctly import hooks from their specific paths
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { useDocument } from 'react-firebase-hooks/firestore';
+// #region Firebase Hooks Imports
+import { useAuthState as useFirebaseAuthState } from 'react-firebase-hooks/auth';
+import { useDocument as useFirebaseDoc } from 'react-firebase-hooks/firestore';
 import { useCollection as useFirebaseCollection } from 'react-firebase-hooks/firestore';
+// #endregion
 
-// Re-export core context hooks
+// #region Provider and Profile Imports
 export {
   useAuth,
   useFirestore,
   useStorage,
   useFirebaseApp,
 } from './provider';
+import { useUserProfile } from './auth/user-profile-provider';
+// #endregion
 
-const getServerFirebaseConfig = () => {
-  if (process.env.FIREBASE_CONFIG) {
-    try {
-      return JSON.parse(process.env.FIREBASE_CONFIG);
-    } catch (e) {
-      console.error("Failed to parse FIREBASE_CONFIG:", e);
-      return undefined; 
-    }
-  }
-  return undefined;
-}
-
-const firebaseConfig = getServerFirebaseConfig() || {
+// #region Firebase Initialization
+const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -51,70 +33,38 @@ const firebaseConfig = getServerFirebaseConfig() || {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase for client-side usage
-let app: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
-let storage: FirebaseStorage;
+// Initialize Firebase instances, ensuring it only happens once.
+const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
+// EXPORT the initialized instances directly to break the circular dependency
+export const auth: Auth = getAuth(app);
+export const firestore: Firestore = getFirestore(app);
+export const storage: FirebaseStorage = getStorage(app);
+export { app as firebaseApp };
+// #endregion
 
-auth = getAuth(app);
-firestore = getFirestore(app);
-storage = getStorage(app);
-
-export const initializeFirebase = () => {
-  return { firebaseApp: app, auth, firestore, storage };
-};
-
-// Auth functions
-export const signUpWithEmailPassword = (email: any, password: any) => {
-  return createUserWithEmailAndPassword(auth, email, password);
-};
-
-export const signInWithEmailPassword = (email: any, password: any) => {
-  return signInWithEmailAndPassword(auth, email, password);
-};
+// #region Re-exported Hooks
 
 /**
- * Handles uploading a file to a specified path in Firebase Storage.
- * @param userId - The user's unique ID to create a user-specific folder.
- * @param folder - The top-level folder (e.g., 'avatars', 'documents').
- * @param file - The file object to upload.
- * @returns The public download URL of the uploaded file.
+ * This is the OFFICIAL `useUser` hook for the entire application.
+ * It re-exports the `useUserProfile` hook.
  */
-export const uploadFileToStorage = async (userId: string, folder: string, file: File) => {
-  if (!userId) throw new Error("User ID is required for uploading files.");
-  // Create a unique, user-specific path to prevent overwrites.
-  const filePath = `${folder}/${userId}/${Date.now()}-${file.name}`;
-  const storageRef = ref(storage, filePath);
-
-  await uploadBytes(storageRef, file);
-  const downloadURL = await getDownloadURL(storageRef);
-  
-  return downloadURL;
-};
+export const useUser = useUserProfile;
 
 /**
- * The official hook from `react-firebase-hooks/auth` for user state.
- * This replaces the custom, problematic `useUser` hook.
- * It returns an object to maintain compatibility with existing components.
+ * This hook provides the raw Firebase Auth user state.
  */
-export const useUser = () => {
-  const [user, loading, error] = useAuthState(auth);
-
-  useEffect(() => {
-    if (error) {
-      console.error('useAuthState Error:', error);
-    }
-  }, [error]);
-
-  return { user, loading };
+export const useAuthState = () => {
+  const [user, loading, error] = useFirebaseAuthState(auth);
+  return { user, loading, error };
 };
 
-// Re-export firestore hooks for use throughout the app
-export { useDocument as useDoc, useFirebaseCollection as useCollection };
+// Re-export the main Firestore hooks for convenience throughout the app.
+export { useFirebaseDoc as useDoc, useFirebaseCollection as useCollection };
+// #endregion
+
+// #region Helper Function Exports
+// Export all helper functions from their respective files.
+export * from './auth';
+export * from './storage';
+// #endregion

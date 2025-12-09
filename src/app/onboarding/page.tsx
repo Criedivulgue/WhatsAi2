@@ -19,7 +19,6 @@ export default function OnboardingPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  // Use a single state for form data, mirroring UserProfileData
   const [formData, setFormData] = useState<Partial<UserProfileData>>({
     publicName: '',
     slogan: '',
@@ -75,10 +74,10 @@ export default function OnboardingPage() {
     try {
       let avatarUrl = '';
       if (avatarFile) {
-        avatarUrl = await uploadFileToStorage(user.uid, 'avatars', avatarFile);
+        // CORRECTED: Swapped arguments to match the function signature `uploadFileToStorage(file, path)`.
+        avatarUrl = await uploadFileToStorage(avatarFile, `avatars/${user.uid}`);
       }
 
-      // Combine form data and avatar URL into the final object
       const finalProfileData: UserProfileData = {
         publicName: formData.publicName || '',
         slogan: formData.slogan || '',
@@ -88,7 +87,6 @@ export default function OnboardingPage() {
         whatsappNumber: formData.whatsappNumber || '',
       };
 
-      // Call the new, consolidated function
       await createBrandAndUserProfile(firestore, user.uid, finalProfileData);
 
       toast({
@@ -145,23 +143,23 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2 col-span-2">
               <Label htmlFor="publicName">Nome da Marca</Label>
-              <Input id="publicName" placeholder="O nome do seu negócio" value={formData.publicName} onChange={handleInputChange} required disabled={isSubmitting} />
+              <Input id="publicName" placeholder="O nome do seu negócio" value={formData.publicName ?? ''} onChange={handleInputChange} required disabled={isSubmitting} />
             </div>
             <div className="grid gap-2 col-span-2">
               <Label htmlFor="slogan">Slogan</Label>
-              <Input id="slogan" placeholder="Uma frase que descreve sua marca" value={formData.slogan} onChange={handleInputChange} disabled={isSubmitting} />
+              <Input id="slogan" placeholder="Uma frase que descreve sua marca" value={formData.slogan ?? ''} onChange={handleInputChange} disabled={isSubmitting} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="city">Cidade</Label>
-              <Input id="city" placeholder="Ex: São Paulo" value={formData.city} onChange={handleInputChange} disabled={isSubmitting} />
+              <Input id="city" placeholder="Ex: São Paulo" value={formData.city ?? ''} onChange={handleInputChange} disabled={isSubmitting} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="state">Estado</Label>
-              <Input id="state" placeholder="Ex: SP" value={formData.state} onChange={handleInputChange} disabled={isSubmitting} />
+              <Input id="state" placeholder="Ex: SP" value={formData.state ?? ''} onChange={handleInputChange} disabled={isSubmitting} />
             </div>
             <div className="grid gap-2 col-span-2">
               <Label htmlFor="whatsappNumber">WhatsApp</Label>
-              <Input id="whatsappNumber" placeholder="+55 11 99999-9999" value={formData.whatsappNumber} onChange={handleInputChange} required disabled={isSubmitting} />
+              <Input id="whatsappNumber" placeholder="+55 11 99999-9999" value={formData.whatsappNumber ?? ''} onChange={handleInputChange} required disabled={isSubmitting} />
             </div>
           </div>
 

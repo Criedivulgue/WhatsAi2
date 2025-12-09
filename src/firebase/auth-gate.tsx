@@ -31,6 +31,7 @@ export function AuthGate({ children }: PropsWithChildren) {
 
     const isAuthPage = pathname === '/';
     const isOnboardingPage = pathname === '/onboarding';
+    const isClientChatPage = pathname.startsWith('/client-chat');
     const userProfileExists = userDoc?.exists();
 
     if (user) {
@@ -44,16 +45,20 @@ export function AuthGate({ children }: PropsWithChildren) {
       }
     } else {
       // User is not authenticated
-      if (!isAuthPage) {
-        // You might want to allow other public pages here, e.g. /terms
-        // For this app, all non-auth routes are protected.
-        // router.push('/');
+      // If the user is not on any allowed public page, redirect them to the login page.
+      if (!isAuthPage && !isOnboardingPage && !isClientChatPage) {
+        router.push('/');
       }
     }
   }, [user, userDoc, isLoading, pathname, router]);
 
-  // Show a global loader to prevent any content flash or rendering of protected routes.
-  if (isLoading || (!user && pathname !== '/')) {
+  // This condition is crucial. It shows a loader under two circumstances:
+  // 1. `isLoading` is true: We are actively fetching the user's auth state or profile.
+  // 2. `!user && !isPublicPage`: The user is not logged in and is trying to access a protected page.
+  // This second condition is a "pre-emptive" loader. It prevents the protected `children`
+  // from flashing on the screen for a brief moment before the `useEffect` hook can redirect the user.
+  const isPublicPage = pathname === '/' || pathname === '/onboarding' || pathname.startsWith('/client-chat');
+  if (isLoading || (!user && !isPublicPage)) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

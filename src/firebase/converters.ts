@@ -10,7 +10,8 @@ import type {
 } from 'firebase/firestore';
 
 /**
- * FirestoreDataConverter for the simple User object.
+ * FirestoreDataConverter for the new User object.
+ * This handles the data stored in the /users/{uid} documents.
  */
 export const userConverter: FirestoreDataConverter<User> = {
   fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): User {
@@ -19,7 +20,7 @@ export const userConverter: FirestoreDataConverter<User> = {
       id: snapshot.id,
       brandId: data.brandId,
       avatarUrl: data.avatarUrl,
-      attendantPersona: data.attendantPersona,
+      publicName: data.publicName,
     };
   },
   toFirestore(user: WithFieldValue<User>): DocumentData {
@@ -51,10 +52,62 @@ export const brandConverter: FirestoreDataConverter<Brand> = {
   },
 };
 
+/**
+ * FirestoreDataConverter for the Contact type.
+ */
+export const contactConverter: FirestoreDataConverter<Contact> = {
+  fromFirestore(
+    snapshot: QueryDocumentSnapshot,
+    options: SnapshotOptions
+  ): Contact {
+    const data = snapshot.data(options)!;
+    return {
+      id: snapshot.id,
+      name: data.name,
+      phone: data.phone,
+      contactType: data.contactType,
+      email: data.email,
+      notes: data.notes,
+      avatar: data.avatar,
+      categories: data.categories,
+      interests: data.interests,
+      brandId: data.brandId, // Include brandId from Firestore
+    };
+  },
+  toFirestore(contact: WithFieldValue<Contact>): DocumentData {
+    const { id, ...data } = contact;
+    return data;
+  },
+};
 
 /**
- * FirestoreDataConverter for the UserProfile type (DEPRECATED - Use User and Brand). 
+ * FirestoreDataConverter for the Chat type.
  */
+export const chatConverter: FirestoreDataConverter<Chat> = {
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): Chat {
+    const data = snapshot.data(options)!;
+    return {
+      id: snapshot.id,
+      contactId: data.contactId,
+      attendantId: data.attendantId,
+      status: data.status,
+      lastMessageTimestamp: data.lastMessageTimestamp,
+      lastMessageContent: data.lastMessageContent,
+      brandId: data.brandId,
+      messages: [], // This is a local-only field, not stored in Firestore
+      contact: undefined, // This is a local-only field, not stored in Firestore
+    };
+  },
+  toFirestore(chat: WithFieldValue<Chat>): DocumentData {
+    // Omit local-only fields before sending to Firestore
+    const { id, contact, messages, ...data } = chat;
+    return data;
+  },
+};
+
+
+// DEPRECATED: This converter is for the old UserProfile type.
+// It should be removed once the migration to User and Brand is complete.
 export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
   fromFirestore(
     snapshot: QueryDocumentSnapshot,
@@ -81,55 +134,6 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
   },
   toFirestore(profile: WithFieldValue<UserProfile>): DocumentData {
     const { id, ...data } = profile;
-    return data;
-  },
-};
-
-/**
- * FirestoreDataConverter for the Contact type.
- */
-export const contactConverter: FirestoreDataConverter<Contact> = {
-  fromFirestore(
-    snapshot: QueryDocumentSnapshot,
-    options: SnapshotOptions
-  ): Contact {
-    const data = snapshot.data(options)!;
-    return {
-      id: snapshot.id,
-      name: data.name,
-      phone: data.phone,
-      contactType: data.contactType,
-      email: data.email,
-      notes: data.notes,
-      avatar: data.avatar,
-      categories: data.categories,
-      interests: data.interests,
-    };
-  },
-  toFirestore(contact: WithFieldValue<Contact>): DocumentData {
-    const { id, ...data } = contact;
-    return data;
-  },
-};
-
-/**
- * FirestoreDataConverter for the Chat type.
- */
-export const chatConverter: FirestoreDataConverter<Chat> = {
-  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): Chat {
-    const data = snapshot.data(options)!;
-    return {
-      id: snapshot.id,
-      contactId: data.contactId,
-      status: data.status,
-      lastMessageTimestamp: data.lastMessageTimestamp,
-      lastMessageContent: data.lastMessageContent,
-      messages: [], 
-      contact: undefined, 
-    };
-  },
-  toFirestore(chat: WithFieldValue<Chat>): DocumentData {
-    const { id, contact, messages, ...data } = chat;
     return data;
   },
 };

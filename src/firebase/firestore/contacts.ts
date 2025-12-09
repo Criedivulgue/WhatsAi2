@@ -13,29 +13,30 @@ import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
 // This type defines the data coming directly from the form
-type ContactFormData = Omit<Contact, 'id' | 'avatar' | 'categories' | 'interests'>;
+type ContactFormData = Omit<Contact, 'id' | 'avatar' | 'categories' | 'interests' | 'brandId'>;
 
 /**
- * Adds a new contact to a user's subcollection in the database.
- * This function completes the contact data with default values.
+ * Adds a new contact to the top-level 'contacts' collection.
+ * Associates the contact with a brand via the brandId field.
  * @param firestore The Firestore instance.
- * @param userId The ID of the user who owns this contact.
+ * @param brandId The ID of the brand this contact belongs to.
  * @param data The data for the new contact from the form.
  */
 export async function addContact(
   firestore: Firestore,
-  userId: string,
+  brandId: string,
   data: ContactFormData
 ) {
-  // Complete the contact data with default/generated values
+  // Complete the contact data with the brandId and other defaults
   const newContactData: Omit<Contact, 'id'> = {
     ...data,
-    avatar: `avatar-${Math.floor(Math.random() * 6) + 1}`, 
+    brandId,
+    avatar: `avatar-${Math.floor(Math.random() * 6) + 1}`,
     categories: [],
     interests: [],
   };
 
-  const contactsRef = collection(firestore, 'users', userId, 'contacts');
+  const contactsRef = collection(firestore, 'contacts');
   
   try {
     await addDoc(contactsRef, newContactData);
@@ -51,19 +52,17 @@ export async function addContact(
 }
 
 /**
- * Updates an existing contact's data within a user's subcollection.
+ * Updates an existing contact's data in the top-level 'contacts' collection.
  * @param firestore The Firestore instance.
- * @param userId The ID of the user who owns this contact.
  * @param contactId The ID of the contact to update.
  * @param data The partial data to update.
  */
 export async function updateContact(
   firestore: Firestore,
-  userId: string,
   contactId: string,
   data: Partial<ContactFormData>
 ) {
-  const contactRef = doc(firestore, 'users', userId, 'contacts', contactId);
+  const contactRef = doc(firestore, 'contacts', contactId);
   
   try {
     await updateDoc(contactRef, data);
@@ -79,17 +78,15 @@ export async function updateContact(
 }
 
 /**
- * Deletes a contact from a user's subcollection.
+ * Deletes a contact from the top-level 'contacts' collection.
  * @param firestore The Firestore instance.
- * @param userId The ID of the user who owns this contact.
  * @param contactId The ID of the contact to delete.
  */
 export async function deleteContact(
   firestore: Firestore,
-  userId: string,
   contactId: string
 ) {
-  const contactRef = doc(firestore, 'users', userId, 'contacts', contactId);
+  const contactRef = doc(firestore, 'contacts', contactId);
   
   try {
     await deleteDoc(contactRef);

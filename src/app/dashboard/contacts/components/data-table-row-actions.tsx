@@ -11,6 +11,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -96,6 +97,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps<Contact>) 
         <SheetContent className="w-full sm:max-w-md flex flex-col">
           <SheetHeader>
             <SheetTitle>Editar Contato</SheetTitle>
+            <SheetDescription>
+              Faça alterações no contato aqui. Clique em salvar quando terminar.
+            </SheetDescription>
           </SheetHeader>
           <ScrollArea className="flex-grow">
             <ContactForm

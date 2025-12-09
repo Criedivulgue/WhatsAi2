@@ -2,47 +2,58 @@
 
 import ChatLayout from "@/components/chat/chat-layout";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import type { Chat } from "@/lib/types";
+import type { Chat, Contact } from "@/lib/types";
 import {
   collection,
   query,
+  where,
+  QuerySnapshot,
+  DocumentData,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { chatConverter, contactConverter } from "@/firebase/converters"; // Import centralized converters
+import { chatConverter, contactConverter } from "@/firebase/converters";
 
 export default function ChatPage() {
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
     const defaultLayout = [320, 480, 1];
 
-    // Correctly typed query for the user's chats subcollection
+    // This composite query now correctly filters by BOTH brand and attendant.
+    // This satisfies Firestore security rules that likely require brand-level scoping.
     const chatsQuery = useMemo(() => {
-        if (!user) return null;
-        const chatColRef = collection(firestore, 'users', user.uid, 'chats').withConverter(chatConverter);
-        return query(chatColRef);
+        if (!user?.uid || !user?.brandId) return null;
+        const chatColRef = collection(firestore, 'chats').withConverter(chatConverter);
+        return query(chatColRef, 
+            where("brandId", "==", user.brandId), 
+            where("attendantId", "==", user.uid)
+        );
     }, [user, firestore]);
 
-    const { data: chatsData, loading: chatsLoading } = useCollection(chatsQuery);
+    const [chatsSnapshot, chatsLoading, chatsError] = useCollection<Chat>(chatsQuery);
 
-    // Correctly typed query for the user's contacts subcollection
+    // This query correctly finds all contacts belonging to the user's brand.
     const contactsQuery = useMemo(() => {
-        if (!user) return null;
-        const contactColRef = collection(firestore, 'users', user.uid, 'contacts').withConverter(contactConverter);
-        return query(contactColRef);
+        if (!user?.brandId) return null;
+        const contactColRef = collection(firestore, 'contacts').withConverter(contactConverter);
+        return query(contactColRef, where("brandId", "==", user.brandId));
     }, [user, firestore]);
 
-    const { data: contactsData, loading: contactsLoading } = useCollection(contactsQuery);
+    const [contactsSnapshot, contactsLoading, contactsError] = useCollection<Contact>(contactsQuery);
     
     const [hydratedChats, setHydratedChats] = useState<Chat[]>([]);
 
     useEffect(() => {
-        if (chatsData && contactsData) {
-            const contactsMap = new Map(contactsData.map(c => [c.id, c]));
-            const chatsWithContact = chatsData.map(chat => ({
+        if (chatsSnapshot && contactsSnapshot) {
+            const chatsData = chatsSnapshot.docs.map(doc => doc.data());
+            const contactsData = contactsSnapshot.docs.map(doc => doc.data());
+
+            const contactsMap = new Map(contactsData.map((c: Contact) => [c.id, c]));
+            
+            const chatsWithContact = chatsData.map((chat: Chat) => ({
                 ...chat,
                 contact: contactsMap.get(chat.contactId)
-            })).filter(chat => !!chat.contact); // Ensure contact exists
+            })).filter((chat): chat is Chat & { contact: Contact } => !!chat.contact);
             
             chatsWithContact.sort((a, b) => {
                 const timeA = a.lastMessageTimestamp?.toMillis() || 0;
@@ -50,13 +61,17 @@ export default function ChatPage() {
                 return timeB - timeA;
             });
 
-            setHydratedChats(chatsWithContact as Chat[]);
+            setHydratedChats(chatsWithContact);
         } else {
              setHydratedChats([]);
         }
-    }, [chatsData, contactsData]);
+    }, [chatsSnapshot, contactsSnapshot]);
 
     const isLoading = userLoading || chatsLoading || contactsLoading;
+
+    if (chatsError || contactsError) {
+        console.error("Error loading data:", chatsError || contactsError);
+    }
 
     if (isLoading) {
         return (

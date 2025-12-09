@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { doc } from 'firebase/firestore';
-import { useUser as useAuthUser, useFirestore, useDoc } from '@/firebase';
+// Use the fundamental auth state hook, not the composed useUser hook
+import { useAuthState, useFirestore, useDoc } from '@/firebase'; 
 import { userConverter, brandConverter } from '@/firebase/converters';
 import type { User, Brand } from '@/lib/types';
 import { type User as FirebaseUser } from 'firebase/auth';
@@ -15,9 +16,10 @@ export interface ComposedUserProfile extends User, Brand {
   uid: string;
 }
 
+// Defines the shape of the context value
 interface UserProfileContextType {
-  user: ComposedUserProfile | null;
-  auth: FirebaseUser | null;
+  user: ComposedUserProfile | null; // The rich, composed user profile
+  auth: FirebaseUser | null; // The raw Firebase Auth user object
   loading: boolean;
 }
 
@@ -29,37 +31,45 @@ const UserProfileContext = createContext<UserProfileContextType | undefined>(und
  */
 export function UserProfileProvider({ children }: { children: ReactNode }) {
   const firestore = useFirestore();
-  const { user: authUser, loading: authLoading } = useAuthUser();
+  // 1. Get the basic authentication user from Firebase Auth.
+  const { user: authUser, loading: authLoading } = useAuthState();
 
-  // 1. Fetch the simple User document (/users/{uid})
-  const userDocRef = authUser ? doc(firestore, 'users', authUser.uid).withConverter(userConverter) : null;
-  // Correctly destructure the array returned by the useDoc hook
-  const [userSnapshot, userDocLoading] = useDoc(userDocRef);
-  const userData = userSnapshot?.data();
+  // 2. Create a memoized reference to the user document in Firestore.
+  const userDocRef = useMemo(() => 
+    authUser ? doc(firestore, 'users', authUser.uid).withConverter(userConverter) : null,
+    [authUser, firestore]
+  );
+  const [userDoc, userLoading] = useDoc(userDocRef);
+  const userData = userDoc?.data();
 
-  // 2. Based on the user doc, fetch the corresponding Brand document (/brands/{brandId})
-  const brandDocRef = userData?.brandId
-    ? doc(firestore, 'brands', userData.brandId).withConverter(brandConverter)
-    : null;
-  // Correctly destructure the array returned by the useDoc hook
-  const [brandSnapshot, brandDocLoading] = useDoc(brandDocRef);
-  const brandData = brandSnapshot?.data();
+  // 3. Create a memoized reference to the brand document, based on the user data.
+  const brandDocRef = useMemo(() => 
+    userData?.brandId ? doc(firestore, 'brands', userData.brandId).withConverter(brandConverter) : null,
+    [userData, firestore]
+  );
+  const [brandDoc, brandLoading] = useDoc(brandDocRef);
+  const brandData = brandDoc?.data();
 
-  const loading = authLoading || userDocLoading || brandDocLoading;
+  const loading = authLoading || userLoading || brandLoading;
 
-  let composedUser: ComposedUserProfile | null = null;
-  if (authUser && userData && brandData) {
-    composedUser = {
-      ...authUser, 
-      ...userData, 
-      ...brandData,
-    };
-  }
+  // 4. Compose the final user profile object.
+  const composedUser: ComposedUserProfile | null = useMemo(() => {
+    if (authUser && userData && brandData) {
+      return {
+        ...userData,
+        ...brandData,
+        uid: authUser.uid, // Ensure auth UID is definitive
+        email: authUser.email, // Ensure auth email is definitive
+      };
+    }
+    return null;
+  }, [authUser, userData, brandData]);
 
+  // 5. Provide the correct context value, matching the UserProfileContextType.
   const value = {
-    user: composedUser,
-    // Ensure auth is null, not undefined, to match the context type
-    auth: authUser ?? null,
+    user: composedUser, // The composed profile
+    // Ensure `auth` is `null` instead of `undefined` during initialization
+    auth: authUser ?? null, // The raw auth user
     loading,
   };
 
@@ -71,7 +81,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * Hook to access the complete, composed user profile.
+ * Hook to access the complete, composed user profile and auth state.
  */
 export function useUserProfile() {
   const context = useContext(UserProfileContext);

@@ -29,10 +29,13 @@ import { addContact, updateContact } from '@/firebase/firestore/contacts';
 import { useEffect } from 'react';
 import { IMaskInput } from 'react-imask';
 
+// Schema for form validation. Remains unchanged.
 const contactFormSchema = z.object({
   name: z.string().min(2, 'O nome é obrigatório.'),
   email: z.string().email('Email inválido.').optional().or(z.literal('')),
-  phone: z.string().min(10, "O telefone deve ter pelo menos 10 dígitos."),
+  phone: z.string()
+    .regex(/^[0-9]+$/, 'O telefone deve conter apenas números.')
+    .min(10, "O telefone deve ter pelo menos 10 dígitos."),
   contactType: z.enum([
     'Lead',
     'Prospect',
@@ -45,10 +48,11 @@ const contactFormSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
+// Props are updated to accept brandId and not require userId.
 interface ContactFormProps {
-  contact?: Contact;
-  userId?: string;
-  onSuccess?: () => void;
+  contact?: Contact;     // For editing existing contacts
+  brandId?: string;      // For creating new contacts
+  onSuccess?: () => void;  // Callback for successful submission
 }
 
 const phoneMask = [
@@ -56,7 +60,8 @@ const phoneMask = [
     { mask: '(00) 00000-0000' },
 ];
 
-export function ContactForm({ contact, userId, onSuccess }: ContactFormProps) {
+// The component now uses brandId and doesn't rely on the outdated userId.
+export function ContactForm({ contact, brandId, onSuccess }: ContactFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -74,40 +79,45 @@ export function ContactForm({ contact, userId, onSuccess }: ContactFormProps) {
     mode: 'onChange',
   });
 
+  // Populates the form with contact data when in edit mode.
   useEffect(() => {
     if (contact) {
       form.reset({
-        name: contact.name,
+        name: contact.name ?? '',
         email: contact.email ?? '',
-        phone: contact.phone,
+        phone: contact.phone ?? '',
         contactType: contact.contactType,
         notes: contact.notes ?? '',
       });
     }
   }, [contact, form]);
 
+  // The submit handler now uses the correct functions and parameters.
   const onSubmit = async (data: ContactFormValues) => {
-    if (!userId) {
+    // Check for brandId only when creating a new contact.
+    if (!isEditMode && !brandId) {
         toast({
             variant: 'destructive',
-            title: 'Erro',
-            description: 'ID do usuário não encontrado. Não é possível salvar o contato.',
+            title: 'Erro de Configuração',
+            description: 'O ID da marca não foi fornecido. Não é possível criar o contato.',
         });
         return;
     }
 
     try {
       if (isEditMode && contact) {
-        await updateContact(firestore, userId, contact.id, data);
+        // Calls updateContact with the correct parameters: contactId and form data.
+        await updateContact(firestore, contact.id, data);
         toast({
           title: 'Contato atualizado!',
           description: `${data.name} foi atualizado com sucesso.`,
         });
-      } else {
-        await addContact(firestore, userId, data);
+      } else if (brandId) {
+        // Calls addContact with the correct parameters: brandId and form data.
+        await addContact(firestore, brandId, data);
         toast({
           title: 'Contato adicionado!',
-          description: `${data.name} foi adicionado à sua lista.`,
+          description: `${data.name} foi adicionado à sua lista.`
         });
       }
       onSuccess?.();
@@ -120,9 +130,12 @@ export function ContactForm({ contact, userId, onSuccess }: ContactFormProps) {
     }
   };
 
+  const isSubmitDisabled = form.formState.isSubmitting || (isEditMode ? !contact : !brandId);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-6">
+        {/* Form fields remain unchanged... */}
         <FormField
           control={form.control}
           name="name"
@@ -206,7 +219,7 @@ export function ContactForm({ contact, userId, onSuccess }: ContactFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={form.formState.isSubmitting || !userId} className="w-full">
+        <Button type="submit" disabled={isSubmitDisabled} className="w-full">
           {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditMode ? 'Salvar Alterações' : 'Adicionar Contato'}
         </Button>

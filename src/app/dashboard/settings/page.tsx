@@ -28,13 +28,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirestore, useStorage } from '@/firebase'; 
+import { useFirestore, uploadFileToStorage } from '@/firebase'; 
 import { useUserProfile } from '@/firebase/auth/user-profile-provider';
 import {
   updateBrandData,
   updateUserProfile,
 } from '@/firebase/firestore/mutations';
-import { uploadAvatar } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 
 const brandIdentitySchema = z.object({
@@ -59,7 +58,6 @@ type AiSettingsFormValues = z.infer<typeof aiSettingsSchema>;
 export default function SettingsPage() {
   const { user: composedUser, loading: userLoading } = useUserProfile();
   const firestore = useFirestore();
-  const storage = useStorage();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -69,11 +67,25 @@ export default function SettingsPage() {
 
   const identityForm = useForm<BrandIdentityFormValues>({
     resolver: zodResolver(brandIdentitySchema),
+    defaultValues: {
+        brandName: '',
+        slogan: '',
+        attendantPersona: '',
+        brandTone: '',
+        hardRules: '',
+        softRules: '',
+        knowledgeBase: '',
+    },
     mode: 'onChange',
   });
 
   const aiForm = useForm<AiSettingsFormValues>({
     resolver: zodResolver(aiSettingsSchema),
+    defaultValues: {
+        autoSummarize: true,
+        autoEnrich: false,
+        autoFollowUp: false,
+    },
     mode: 'onChange',
   });
 
@@ -98,18 +110,25 @@ export default function SettingsPage() {
     if (!composedUser || !firestore) return;
     const { attendantPersona, ...brandDetails } = data;
     
-    await Promise.all([
-      updateBrandData(firestore, composedUser.brandId, brandDetails),
-      updateUserProfile(firestore, composedUser.id, { attendantPersona }),
-    ]);
-    
-    toast({ title: 'Sucesso!', description: 'A identidade da sua marca foi atualizada.' });
+    try {
+      await Promise.all([
+        updateBrandData(firestore, composedUser.brandId, brandDetails),
+        updateUserProfile(firestore, composedUser.id, { attendantPersona }),
+      ]);
+      toast({ title: 'Sucesso!', description: 'A identidade da sua marca foi atualizada.' });
+    } catch (error) {
+        toast({ title: 'Erro', description: 'Não foi possível atualizar a identidade da marca.', variant: 'destructive' });
+    }
   };
 
   const onAiSubmit = async (data: AiSettingsFormValues) => {
     if (!composedUser || !firestore) return;
-    await updateBrandData(firestore, composedUser.brandId, { aiConfig: data });
-    toast({ title: 'Sucesso!', description: 'As configurações de IA foram atualizadas.' });
+    try {
+        await updateBrandData(firestore, composedUser.brandId, { aiConfig: data });
+        toast({ title: 'Sucesso!', description: 'As configurações de IA foram atualizadas.' });
+    } catch (error) {
+        toast({ title: 'Erro', description: 'Não foi possível atualizar as configurações de IA.', variant: 'destructive' });
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,11 +146,11 @@ export default function SettingsPage() {
   };
 
   const handleSaveAvatar = async () => {
-    if (!avatarFile || !composedUser || !storage || !firestore) return;
+    if (!avatarFile || !composedUser || !firestore) return;
 
     setIsUploading(true);
     try {
-      const downloadURL = await uploadAvatar(storage, composedUser.id, avatarFile);
+      const downloadURL = await uploadFileToStorage(avatarFile, `avatars/${composedUser.id}`);
       await updateUserProfile(firestore, composedUser.id, { avatarUrl: downloadURL });
       
       setAvatarPreview(null); 

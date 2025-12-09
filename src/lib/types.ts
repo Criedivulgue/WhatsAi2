@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 // ==================================================================
@@ -13,6 +14,7 @@ export type User = {
   id: string; // Firebase Auth UID
   brandId: string; // The ID of the brand document in the /brands collection
   avatarUrl: string;
+  publicName: string; // The public-facing name for the brand/attendant
   attendantPersona?: string; // Specific persona for this user as an attendant
 };
 
@@ -24,11 +26,9 @@ export type Brand = {
   id: string;
   brandName: string;
   slogan?: string;
-  // CORRECTED: Added missing contact fields from onboarding
   city?: string;
   state?: string;
   whatsappNumber?: string;
-  // END CORRECTION
   brandTone?: string;
   knowledgeBase?: string;
   hardRules?: string;
@@ -71,7 +71,6 @@ export type UserProfile = {
   createdAt: Timestamp;
 }
 
-// CORRECTED: Re-added UserProfileData to represent the onboarding form structure
 export type UserProfileData = Pick<
   UserProfile,
   | 'publicName'
@@ -83,11 +82,12 @@ export type UserProfileData = Pick<
 >;
 
 // ==================================================================
-// OTHER EXISTING TYPES (UNCHANGED)
+// OTHER EXISTING TYPES (CORRECTED)
 // ==================================================================
 
 export type Contact = {
   id: string;
+  brandId: string; // The ID of the brand this contact belongs to
   name: string;
   email?: string;
   phone: string;
@@ -109,7 +109,9 @@ export type Message = {
 
 export type Chat = {
   id: string;
+  brandId: string; // The ID of the brand this chat belongs to
   contactId: string;
+  attendantId: string; // The ID of the user attendant assigned to this chat
   status: 'Active' | 'Awaiting Return' | 'Closed' | 'Archived' | 'AI-Assisted';
   lastMessageTimestamp: Timestamp;
   lastMessageContent?: string;

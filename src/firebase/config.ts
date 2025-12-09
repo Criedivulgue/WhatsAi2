@@ -1,9 +1,16 @@
-// Your web app's Firebase configuration
-export const firebaseConfig = {
-  apiKey: "AIzaSyC4TwN8QB8NXeJrVV1iqwIe2T-7GnHuzyc",
-  authDomain: "studio-6770001520-c7ba9.firebaseapp.com",
-  projectId: "studio-6770001520-c7ba9",
-  storageBucket: "studio-6770001520-c7ba9.appspot.com",
-  messagingSenderId: "369458920810",
-  appId: "1:369458920810:web:3cd8400fd88482a3ec7913"
+
+// src/firebase/config.ts
+
+import { FirebaseOptions } from 'firebase/app';
+
+export const firebaseConfig: FirebaseOptions = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
+
+// DEBUG: Imprimir a configuração para verificar as variáveis de ambiente
+console.log('Firebase Config Object:', firebaseConfig);

@@ -2,74 +2,79 @@
 
 import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { doc } from 'firebase/firestore';
-// Use the fundamental auth state hook, not the composed useUser hook
-import { useAuthState, useFirestore, useDoc } from '@/firebase'; 
+import { useAuthState, useFirestore, useDoc, useAuth } from '@/firebase';
 import { userConverter, brandConverter } from '@/firebase/converters';
 import type { User, Brand } from '@/lib/types';
 import { type User as FirebaseUser } from 'firebase/auth';
 
-// The fully composed user profile, combining auth, user doc, and brand doc.
 export interface ComposedUserProfile extends User, Brand {
-  // from Firebase Auth
   email: string | null;
-  // Explicitly add uid as it comes from auth
   uid: string;
 }
 
-// Defines the shape of the context value
 interface UserProfileContextType {
-  user: ComposedUserProfile | null; // The rich, composed user profile
-  auth: FirebaseUser | null; // The raw Firebase Auth user object
+  user: ComposedUserProfile | null;
+  auth: FirebaseUser | null;
   loading: boolean;
 }
 
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
-/**
- * This provider orchestrates the data from Auth, /users, and /brands collections
- * to provide a single, consistent user profile object for the entire app.
- */
 export function UserProfileProvider({ children }: { children: ReactNode }) {
   const firestore = useFirestore();
-  // 1. Get the basic authentication user from Firebase Auth.
-  const { user: authUser, loading: authLoading } = useAuthState();
+  const auth = useAuth();
 
-  // 2. Create a memoized reference to the user document in Firestore.
-  const userDocRef = useMemo(() => 
-    authUser ? doc(firestore, 'users', authUser.uid).withConverter(userConverter) : null,
-    [authUser, firestore]
-  );
+  // Etapa 1: Obter usuário de autenticação.
+  const { user: authUser, loading: authLoading } = useAuthState(auth);
+
+  // Etapa 2: Buscar o documento do usuário.
+  const userDocRef = authUser ? doc(firestore, 'users', authUser.uid).withConverter(userConverter) : null;
   const [userDoc, userLoading] = useDoc(userDocRef);
   const userData = userDoc?.data();
 
-  // 3. Create a memoized reference to the brand document, based on the user data.
-  const brandDocRef = useMemo(() => 
-    userData?.brandId ? doc(firestore, 'brands', userData.brandId).withConverter(brandConverter) : null,
-    [userData, firestore]
-  );
+  // Etapa 3: Lógica de compatibilidade para dados da marca.
+  // Verifica se o modelo de dados novo (com brandId) está em uso.
+  const hasBrandId = !!userData?.brandId;
+  const brandDocRef = hasBrandId ? doc(firestore, 'brands', userData.brandId).withConverter(brandConverter) : null;
   const [brandDoc, brandLoading] = useDoc(brandDocRef);
-  const brandData = brandDoc?.data();
+  const brandDataFromDoc = brandDoc?.data();
 
-  const loading = authLoading || userLoading || brandLoading;
+  // O carregamento geral agora considera o caminho condicional da busca da marca.
+  const loading = authLoading || userLoading || (hasBrandId && brandLoading);
 
-  // 4. Compose the final user profile object.
+  // Etapa 4: Compor o perfil final, lidando com AMBOS os modelos de dados (antigo e novo).
   const composedUser: ComposedUserProfile | null = useMemo(() => {
-    if (authUser && userData && brandData) {
+    if (!authUser || !userData) {
+      return null; // Condição base: sem autenticação ou dados do usuário, não há perfil.
+    }
+
+    // CASO 1: Modelo de dados NOVO (user -> brandId -> brands collection)
+    if (hasBrandId) {
+      if (!brandDataFromDoc) {
+        // Se esperamos dados da marca da coleção separada, mas eles ainda não chegaram, o perfil não está pronto.
+        return null;
+      }
+      // Combina dados do usuário e dados da marca de coleções separadas.
       return {
         ...userData,
-        ...brandData,
-        uid: authUser.uid, // Ensure auth UID is definitive
-        email: authUser.email, // Ensure auth email is definitive
+        ...brandDataFromDoc,
+        uid: authUser.uid,
+        email: authUser.email,
+      };
+    } else {
+      // CASO 2: Modelo de dados ANTIGO (todos os dados da marca no próprio documento do usuário)
+      // Este é o fallback que conserta a sua conta. Ele assume que os campos da marca estão em userData.
+      return {
+        ...(userData as any), // Trata userData como se tivesse todos os campos necessários.
+        uid: authUser.uid,
+        email: authUser.email,
       };
     }
-    return null;
-  }, [authUser, userData, brandData]);
+  }, [authUser, userData, hasBrandId, brandDataFromDoc]);
 
-  // 5. Provide the correct context value, matching the UserProfileContextType.
   const value = {
-    user: composedUser, // The composed profile
-    // Ensure `auth` is `null` instead of `undefined` during initialization
-    auth: authUser ?? null, // The raw auth user
+    user: composedUser,
+    auth: authUser ?? null,
     loading,
   };
 
@@ -80,13 +85,10 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Hook to access the complete, composed user profile and auth state.
- */
 export function useUserProfile() {
   const context = useContext(UserProfileContext);
   if (context === undefined) {
-    throw new Error('useUserProfile must be used within a UserProfileProvider');
+    throw new Error('useUserProfile deve ser usado dentro de um UserProfileProvider');
   }
   return context;
 }
